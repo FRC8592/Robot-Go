@@ -1,13 +1,18 @@
 // Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
-
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.simulation.XboxControllerSim;
+import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -20,6 +25,7 @@ public class Robot extends TimedRobot {
   private String m_autoSelected;
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
 
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -30,7 +36,11 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
   }
-
+  XboxController drivecontrol;
+  WPI_TalonFX frontleft;
+  WPI_TalonFX frontright;
+  WPI_TalonFX backleft;
+  WPI_TalonFX backright;
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
    * diagnostics that you want ran during disabled, autonomous, teleoperated and test.
@@ -39,7 +49,7 @@ public class Robot extends TimedRobot {
    * SmartDashboard integrated updating.
    */
   @Override
-  public void robotPeriodic() {}
+  public void robotPeriodic(){}
 
   /**
    * This autonomous (along with the chooser code above) shows how to select between different
@@ -74,11 +84,33 @@ public class Robot extends TimedRobot {
 
   /** This function is called once when teleop is enabled. */
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+    XboxController drivecontrol = new XboxController(0);
+    frontleft = new WPI_TalonFX(HardwareConstants.leftFrontCAN);
+    frontright = new WPI_TalonFX(HardwareConstants.rightFrontCAN);
+    backleft = new WPI_TalonFX(HardwareConstants.leftBackCAN);
+    backright = new WPI_TalonFX(HardwareConstants.rightBackCAN);
+    
+    
+    
+    }
 
   /** This function is called periodically during operator control. */
   @Override
-  public void teleopPeriodic() {}
+  public void teleopPeriodic() {
+      double rightpower;
+      double leftpower;
+
+      rightpower = drivecontrol.getY(GenericHID.Hand.kRight);
+      leftpower = drivecontrol.getY(GenericHID.Hand.kLeft);
+      SmartDashboard.putNumber("LeftPower", leftpower);
+      SmartDashboard.putNumber("RightPower", rightpower);
+        frontright.set(ControlMode.PercentOutput, -rightpower);
+        backright.set(ControlMode.PercentOutput, -rightpower);
+        frontleft.set(ControlMode.PercentOutput, leftpower);
+        backleft.set(ControlMode.PercentOutput, leftpower);
+      
+  }
 
   /** This function is called once when the robot is disabled. */
   @Override
