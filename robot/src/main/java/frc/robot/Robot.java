@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import com.ctre.phoenix.CANifier.GeneralPin;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
@@ -36,11 +37,15 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
   }
-  XboxController drivecontrol;
   WPI_TalonFX frontleft;
   WPI_TalonFX frontright;
   WPI_TalonFX backleft;
   WPI_TalonFX backright;
+
+  WPI_TalonFX turretrotate;
+
+  XboxController turretcontrol = new XboxController(1);
+  XboxController drivecontrol = new XboxController(0);
   /**
    * This function is called every robot packet, no matter the mode. Use this for items like
    * diagnostics that you want ran during disabled, autonomous, teleoperated and test.
@@ -85,12 +90,12 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
-    XboxController drivecontrol = new XboxController(0);
     frontleft = new WPI_TalonFX(HardwareConstants.leftFrontCAN);
     frontright = new WPI_TalonFX(HardwareConstants.rightFrontCAN);
     backleft = new WPI_TalonFX(HardwareConstants.leftBackCAN);
     backright = new WPI_TalonFX(HardwareConstants.rightBackCAN);
     
+    turretrotate = new WPI_TalonFX(HardwareConstants.turretRotateCAN);
     
     
     }
@@ -101,15 +106,24 @@ public class Robot extends TimedRobot {
       double rightpower;
       double leftpower;
 
+      double turretpower;
+
+      turretpower = turretcontrol.getX(GenericHID.Hand.kLeft);
+
       rightpower = drivecontrol.getY(GenericHID.Hand.kRight);
       leftpower = drivecontrol.getY(GenericHID.Hand.kLeft);
+
       SmartDashboard.putNumber("LeftPower", leftpower);
       SmartDashboard.putNumber("RightPower", rightpower);
-        frontright.set(ControlMode.PercentOutput, -rightpower);
-        backright.set(ControlMode.PercentOutput, -rightpower);
-        frontleft.set(ControlMode.PercentOutput, leftpower);
-        backleft.set(ControlMode.PercentOutput, leftpower);
-      
+      SmartDashboard.putNumber("TurretTurnPower", turretpower);
+
+        frontright.set(ControlMode.PercentOutput, rightpower);
+        backright.set(ControlMode.PercentOutput, rightpower);
+        frontleft.set(ControlMode.PercentOutput, -leftpower);
+        backleft.set(ControlMode.PercentOutput, -leftpower);
+        
+        turretrotate.set(ControlMode.PercentOutput, turretpower * 0.5);
+
   }
 
   /** This function is called once when the robot is disabled. */
