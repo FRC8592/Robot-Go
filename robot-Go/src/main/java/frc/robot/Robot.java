@@ -12,9 +12,16 @@ import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller s
 import edu.wpi.first.wpilibj.GenericHID;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX; 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import frc.robot.config_hw;
+
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -33,8 +40,9 @@ public class Robot extends TimedRobot {
   public WPI_TalonFX frontRight;
   public WPI_TalonFX rearLeft;
   public WPI_TalonFX rearRight;
+  public WPI_TalonSRX turretRotate;
+  private final double CAM_ERROR = 1;
 
-  
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -94,10 +102,10 @@ public class Robot extends TimedRobot {
     //Create the primary controller object
     driverController  = new XboxController(0); 
     frontLeft         = new WPI_TalonFX(config_hw.leftFrontCAN); 
-    rearLeft         = new WPI_TalonFX(config_hw.leftBackCAN);
-    frontRight         = new WPI_TalonFX(config_hw.rightFrontCAN);
+    rearLeft          = new WPI_TalonFX(config_hw.leftBackCAN);
+    frontRight        = new WPI_TalonFX(config_hw.rightFrontCAN);
     rearRight         = new WPI_TalonFX(config_hw.rightBackCAN);
-
+    turretRotate      = new WPI_TalonSRX(config_hw.turretRotateCAN);
   }
 
   /** This function is called periodically during operator control. */
@@ -107,10 +115,12 @@ public class Robot extends TimedRobot {
     double leftPower;
     double rightPower;
     boolean reverseDrive;
+    double turretSpeed;
     //defining leftPower and rightPower to the controller
     leftPower = driverController.getY(GenericHID.Hand.kLeft) * 0.3;
     rightPower = driverController.getY(GenericHID.Hand.kRight) * 0.3;
     reverseDrive = driverController.getBumper(GenericHID.Hand.kLeft);
+    
     //this code names our left and right variables in the SmartDashboard program
     SmartDashboard.putNumber("left Power", leftPower);
     SmartDashboard.putNumber("Right Power", rightPower);
@@ -130,6 +140,34 @@ public class Robot extends TimedRobot {
       //left values are negative to go forward
         frontRight.set(ControlMode.PercentOutput, rightPower);
         rearRight.set(ControlMode.PercentOutput, rightPower);
+      }
+
+      NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+      NetworkTableEntry tx = table.getEntry("tx");
+      NetworkTableEntry ty = table.getEntry("ty");
+      NetworkTableEntry ta = table.getEntry("ta");
+      
+      //read values periodically
+      double x = tx.getDouble(0.0);
+      double y = ty.getDouble(0.0);
+      double area = ta.getDouble(0.0);
+      turretSpeed = x/30;
+      //post to smart dashboard periodically
+      SmartDashboard.putNumber("LimelightX", x);
+      SmartDashboard.putNumber("LimelightY", y);
+      SmartDashboard.putNumber("LimelightArea", area);
+
+      
+
+      if (x > CAM_ERROR) {
+        //comment
+        turretRotate.set(ControlMode.PercentOutput, turretSpeed);
+      } else if (x < -CAM_ERROR) {
+        //comment
+        turretRotate.set(ControlMode.PercentOutput, turretSpeed);
+      } else {
+        //comment
+        turretRotate.set(ControlMode.PercentOutput, 0);
       }
   }
 
