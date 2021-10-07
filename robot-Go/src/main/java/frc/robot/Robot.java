@@ -40,9 +40,8 @@ public class Robot extends TimedRobot {
   public WPI_TalonFX frontRight;
   public WPI_TalonFX rearLeft;
   public WPI_TalonFX rearRight;
-  public WPI_TalonSRX turretRotate;
-  private final double CAM_ERROR = 1;
 
+  public shooter turretLauncher;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -99,23 +98,25 @@ public class Robot extends TimedRobot {
   /** This function is called once when teleop is enabled. */
   @Override
   public void teleopInit() {
+
     //Create the primary controller object
     driverController  = new XboxController(0); 
     frontLeft         = new WPI_TalonFX(config_hw.leftFrontCAN); 
     rearLeft          = new WPI_TalonFX(config_hw.leftBackCAN);
     frontRight        = new WPI_TalonFX(config_hw.rightFrontCAN);
     rearRight         = new WPI_TalonFX(config_hw.rightBackCAN);
-    turretRotate      = new WPI_TalonSRX(config_hw.turretRotateCAN);
+    turretLauncher    = new shooter(); //make comment about shooter.java
+    
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    //creating tow variables to use for the left and right on the controller
+    //creating variables
     double leftPower;
     double rightPower;
     boolean reverseDrive;
-    double turretSpeed;
+    
     //defining leftPower and rightPower to the controller
     leftPower = driverController.getY(GenericHID.Hand.kLeft) * 0.3;
     rightPower = driverController.getY(GenericHID.Hand.kRight) * 0.3;
@@ -142,33 +143,8 @@ public class Robot extends TimedRobot {
         rearRight.set(ControlMode.PercentOutput, rightPower);
       }
 
-      NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
-      NetworkTableEntry tx = table.getEntry("tx");
-      NetworkTableEntry ty = table.getEntry("ty");
-      NetworkTableEntry ta = table.getEntry("ta");
-      
-      //read values periodically
-      double x = tx.getDouble(0.0);
-      double y = ty.getDouble(0.0);
-      double area = ta.getDouble(0.0);
-      turretSpeed = x/30;
-      //post to smart dashboard periodically
-      SmartDashboard.putNumber("LimelightX", x);
-      SmartDashboard.putNumber("LimelightY", y);
-      SmartDashboard.putNumber("LimelightArea", area);
+      turretLauncher.autoAim();
 
-      
-
-      if (x > CAM_ERROR) {
-        //comment
-        turretRotate.set(ControlMode.PercentOutput, turretSpeed);
-      } else if (x < -CAM_ERROR) {
-        //comment
-        turretRotate.set(ControlMode.PercentOutput, turretSpeed);
-      } else {
-        //comment
-        turretRotate.set(ControlMode.PercentOutput, 0);
-      }
   }
 
   /** This function is called once when the robot is disabled. */
