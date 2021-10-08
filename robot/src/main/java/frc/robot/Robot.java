@@ -14,6 +14,11 @@ import com.ctre.phoenix.CANifier.GeneralPin;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
  * each mode, as described in the TimedRobot documentation. If you change the name of this class or
@@ -42,7 +47,7 @@ public class Robot extends TimedRobot {
   WPI_TalonFX backleft;
   WPI_TalonFX backright;
 
-  WPI_TalonFX turretrotate;
+  WPI_TalonSRX turretrotate;
 
   XboxController turretcontrol = new XboxController(1);
   XboxController drivecontrol = new XboxController(0);
@@ -95,7 +100,7 @@ public class Robot extends TimedRobot {
     backleft = new WPI_TalonFX(HardwareConstants.leftBackCAN);
     backright = new WPI_TalonFX(HardwareConstants.rightBackCAN);
     
-    turretrotate = new WPI_TalonFX(HardwareConstants.turretRotateCAN);
+    turretrotate = new WPI_TalonSRX(HardwareConstants.turretRotateCAN);
     
     
     }
