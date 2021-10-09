@@ -41,7 +41,7 @@ public class shooter {
      * something 
      * unique
      */
-    public void autoaim(){
+    public void autoAim(){
         double turretSpeed;
         double x;
         double y;
