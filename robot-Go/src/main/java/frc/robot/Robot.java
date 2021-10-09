@@ -36,11 +36,8 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   //this defines "driverController" as an object
   public XboxController driverController;
-  public WPI_TalonFX frontLeft;
-  public WPI_TalonFX frontRight;
-  public WPI_TalonFX rearLeft;
-  public WPI_TalonFX rearRight;
-
+  
+  public driveTrain drive;
   public shooter turretLauncher;
 
   /**
@@ -101,49 +98,17 @@ public class Robot extends TimedRobot {
 
     //Create the primary controller object
     driverController  = new XboxController(0); 
-    frontLeft         = new WPI_TalonFX(config_hw.leftFrontCAN); 
-    rearLeft          = new WPI_TalonFX(config_hw.leftBackCAN);
-    frontRight        = new WPI_TalonFX(config_hw.rightFrontCAN);
-    rearRight         = new WPI_TalonFX(config_hw.rightBackCAN);
     turretLauncher    = new shooter(); //make comment about shooter.java
-    
+    drive             = new driveTrain();
+
   }
 
   /** This function is called periodically during operator control. */
   @Override
   public void teleopPeriodic() {
-    //creating variables
-    double leftPower;
-    double rightPower;
-    boolean reverseDrive;
-    
-    //defining leftPower and rightPower to the controller
-    leftPower = driverController.getY(GenericHID.Hand.kLeft) * 0.3;
-    rightPower = driverController.getY(GenericHID.Hand.kRight) * 0.3;
-    reverseDrive = driverController.getBumper(GenericHID.Hand.kLeft);
-    
-    //this code names our left and right variables in the SmartDashboard program
-    SmartDashboard.putNumber("left Power", leftPower);
-    SmartDashboard.putNumber("Right Power", rightPower);
-    SmartDashboard.putBoolean("reverse Drive", reverseDrive);
-
-      if (reverseDrive == true){
-      // reverse drive
-        frontRight.set(ControlMode.PercentOutput, -leftPower);
-        rearRight.set(ControlMode.PercentOutput, -leftPower);
-      //
-        frontLeft.set(ControlMode.PercentOutput, rightPower);
-        rearLeft.set(ControlMode.PercentOutput, rightPower);
-      } else {
-      //Normal drive
-        frontLeft.set(ControlMode.PercentOutput, -leftPower);
-        rearLeft.set(ControlMode.PercentOutput, -leftPower);
-      //left values are negative to go forward
-        frontRight.set(ControlMode.PercentOutput, rightPower);
-        rearRight.set(ControlMode.PercentOutput, rightPower);
-      }
-
+ 
       turretLauncher.autoAim();
+      drive.driveTrainPeriodic(driverController);
 
   }
 
