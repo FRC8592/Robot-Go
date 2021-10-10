@@ -143,7 +143,7 @@ public class Robot extends TimedRobot {
         rearRight.set(ControlMode.PercentOutput, rightPower);
       }
 
-      turretLauncher.autoAim();
+      turretLauncher.autoaim();
 
   }
 
