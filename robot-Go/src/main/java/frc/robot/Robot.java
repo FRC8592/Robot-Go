@@ -36,6 +36,7 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   //this defines "driverController" as an object
   public XboxController driverController;
+  public XboxController shooterController;
 
   public shooter turretLauncher;
 
@@ -99,7 +100,7 @@ public class Robot extends TimedRobot {
 
     //Create the primary controller object
     driverController  = new XboxController(0); 
-
+    shooterController = new XboxController(1);
     turretLauncher    = new shooter(); //make comment about shooter.java
     
     drive             = new driveTrain();
@@ -111,9 +112,11 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic(){
     
     turretLauncher.autoAim();
-
+    turretLauncher.ballShooter(shooterController);
 
     drive.driveTrainPeriodic(driverController);
+
+    
 
   }
       

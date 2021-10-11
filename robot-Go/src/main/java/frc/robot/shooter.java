@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.GenericHID;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import frc.robot.config_hw;
@@ -18,23 +19,72 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
+
+
 public class shooter {
 
-    public WPI_TalonSRX turretRotate;
+    //constants
     private final double CAM_ERROR = 1;
+    private final double FLYWHEEL_VOLTAGE = 11;
+    private final double FLYWHEEL_P = 0.25;
+    private final double FLYWHEEL_I = 0.0;
+    private final double FLYWHEEL_D = 0.0;
+    private final double FLYWHEEL_F = 0.051;
+    private final double STARTING_FLYWHEEL_SPEED = 2600;
+    private final double RPM_TO_TICKS_MS = 2048.0/600.0;
+    private final double TRIGGER_MOTOR_SPEED = 0.4;
+
+    public WPI_TalonSRX turretRotate;
+    private WPI_TalonSRX collectorBelt;
+    private WPI_TalonSRX triggerMotor;
+    private WPI_TalonFX flyWheel;
     private NetworkTableEntry tx;
     private NetworkTableEntry ty;
     private NetworkTableEntry ta;
+
+    
 
     //the constructer will initilaize the variables
 
     public shooter(){
         turretRotate      = new WPI_TalonSRX(config_hw.turretRotateCAN);
+
+        collectorBelt     = new WPI_TalonSRX(config_hw.ballProcessCAN);
+        triggerMotor      = new WPI_TalonSRX(config_hw.ballTriggerCAN);
+        flyWheel          = new WPI_TalonFX(config_hw.turretLaunchCAN);
+        
+        //settings for flywheel constant velocity mode
+        flyWheel.configFactoryDefault();
+        flyWheel.enableVoltageCompensation(true);
+        //keep voltage of the motor constant even if battery voltage decrease
+        flyWheel.configVoltageCompSaturation(FLYWHEEL_VOLTAGE);
+        flyWheel.setInverted(true);
+        flyWheel.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
+        flyWheel.config_kP(0, FLYWHEEL_P);
+        flyWheel.config_kI(0, FLYWHEEL_I);
+        flyWheel.config_kD(0, FLYWHEEL_D);
+        flyWheel.config_kF(0, FLYWHEEL_F);
+        flyWheel.configClosedloopRamp(1);
+
         //set up networktables for limelight
         NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
         tx = table.getEntry("tx");
         ty = table.getEntry("ty");
         ta = table.getEntry("ta");
+    }
+    /**
+     * convert rpm to ticks per hundred millisecond
+     * @param rpm
+     * @return
+     */
+    public double rpmToFalcon(double rpm){
+      return rpm * RPM_TO_TICKS_MS;
+    }
+    //tphm = rpm * 2048/600
+    //600*tphm/2048 = rpm
+    //tphm = falcon
+    public double falconToRPM(double falcon){
+      return falcon / RPM_TO_TICKS_MS;
     }
 
     /**
@@ -68,5 +118,35 @@ public class shooter {
         } else { // stop turret when x is between + and - CAM_ERROR
           turretRotate.set(ControlMode.PercentOutput, 0);
         }
+
     }
+
+    /**
+     * shoot the ball
+     */
+    public void ballShooter(XboxController ballShooterController){
+      double flyWheelVelocity;
+      double ballInsert;
+      ballInsert = ballShooterController.getTriggerAxis(GenericHID.Hand.kRight);
+
+
+      flyWheel.set(ControlMode.Velocity, rpmToFalcon(STARTING_FLYWHEEL_SPEED));
+      flyWheelVelocity = flyWheel.getSelectedSensorVelocity();
+      SmartDashboard.putNumber("Velocity in RPM", falconToRPM(flyWheelVelocity));
+      SmartDashboard.putNumber("Velocity Setpoint", STARTING_FLYWHEEL_SPEED);
+
+      if (ballInsert == 1){
+        collectorBelt.set(ControlMode.PercentOutput, 1);
+        triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);  
+      }
+      else{
+        collectorBelt.set(ControlMode.PercentOutput, 0);
+        triggerMotor.set(ControlMode.PercentOutput, 0);
+      }
+
+
+
+    }
+    
+    
 }
