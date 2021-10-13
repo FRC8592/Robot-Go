@@ -26,13 +26,14 @@ public class shooter {
     //constants
     private final double CAM_ERROR = 1;
     private final double FLYWHEEL_VOLTAGE = 11;
-    private final double FLYWHEEL_P = 0.25;
+    private final double FLYWHEEL_P = 0.75;
     private final double FLYWHEEL_I = 0.0;
-    private final double FLYWHEEL_D = 0.0;
+    private final double FLYWHEEL_D = 100.0;
     private final double FLYWHEEL_F = 0.051;
     private final double STARTING_FLYWHEEL_SPEED = 2600;
     private final double RPM_TO_TICKS_MS = 2048.0/600.0;
     private final double TRIGGER_MOTOR_SPEED = 0.4;
+    private final double SHOOTING_RANGE = 20;
 
     public WPI_TalonSRX turretRotate;
     private WPI_TalonSRX collectorBelt;
@@ -41,7 +42,7 @@ public class shooter {
     private NetworkTableEntry tx;
     private NetworkTableEntry ty;
     private NetworkTableEntry ta;
-
+    
     
 
     //the constructer will initilaize the variables
@@ -131,11 +132,11 @@ public class shooter {
 
 
       flyWheel.set(ControlMode.Velocity, rpmToFalcon(STARTING_FLYWHEEL_SPEED));
-      flyWheelVelocity = flyWheel.getSelectedSensorVelocity();
-      SmartDashboard.putNumber("Velocity in RPM", falconToRPM(flyWheelVelocity));
+      flyWheelVelocity = falconToRPM(flyWheel.getSelectedSensorVelocity());
+      SmartDashboard.putNumber("Velocity in RPM", flyWheelVelocity);
       SmartDashboard.putNumber("Velocity Setpoint", STARTING_FLYWHEEL_SPEED);
 
-      if (ballInsert == 1){
+      if ((ballInsert == 1) & (Math.abs(flyWheelVelocity - STARTING_FLYWHEEL_SPEED) <= SHOOTING_RANGE)){
         collectorBelt.set(ControlMode.PercentOutput, 1);
         triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);  
       }
