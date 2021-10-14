@@ -30,7 +30,7 @@ public class shooter {
     private final double FLYWHEEL_I = 0.0;
     private final double FLYWHEEL_D = 100.0;
     private final double FLYWHEEL_F = 0.051;
-    private final double STARTING_FLYWHEEL_SPEED = 2600;
+    private final double STARTING_FLYWHEEL_SPEED = 2700;
     private final double RPM_TO_TICKS_MS = 2048.0/600.0;
     private final double TRIGGER_MOTOR_SPEED = 0.4;
     private final double SHOOTING_RANGE = 20;
@@ -108,7 +108,7 @@ public class shooter {
         SmartDashboard.putNumber("LimelightY", y);
         SmartDashboard.putNumber("LimelightArea", area);
 
-        turretSpeed = x/27; //this is our ratio on how fast the turret is allowed to move to get to its position
+        turretSpeed = x/20; //this is our ratio on how fast the turret is allowed to move to get to its position
         
         //move turret to drive x to be less than "CAM_ERROR" 
         //x = 0 when the camera sees the target is in the center
