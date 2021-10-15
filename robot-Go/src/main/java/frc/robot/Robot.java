@@ -9,19 +9,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller stuff
-import edu.wpi.first.wpilibj.GenericHID;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import frc.robot.config_hw;
-
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -101,8 +89,7 @@ public class Robot extends TimedRobot {
     //Create the primary controller object
     driverController  = new XboxController(0); 
     shooterController = new XboxController(1);
-    turretLauncher    = new shooter(); //make comment about shooter.java
-    
+    turretLauncher    = new shooter();
     drive             = new driveTrain();
   }
 
@@ -110,16 +97,10 @@ public class Robot extends TimedRobot {
   @Override
   
   public void teleopPeriodic(){
-    
-    turretLauncher.autoAim();
+    turretLauncher.autoAim(shooterController);
     turretLauncher.ballShooter(shooterController);
-
     drive.driveTrainPeriodic(driverController);
-
-    
-
   }
-      
 
   /** This function is called once when the robot is disabled. */
   @Override
