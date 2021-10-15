@@ -16,22 +16,25 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class shooter {
   //constants
-  private final double CAM_ERROR = 1;           // Allowed aiming error in degrees
-  private final double TURRET_ROTATE_KP = 1.0 / 20.0;   // Proportional constant for turret rotate speed
-  private final double FLYWHEEL_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
-  private final double FLYWHEEL_P = 0.75;
-  private final double FLYWHEEL_I = 0.0;
-  private final double FLYWHEEL_D = 100.0;
-  private final double FLYWHEEL_F = 0.051;
-  private final double STARTING_FLYWHEEL_SPEED = 2700;
-  private final double RPM_TO_TICKS_MS = 2048.0/600.0;  // Conversion factor for rotational velocity
-  private final double TRIGGER_MOTOR_SPEED = 0.4;       // Maximum power for the motor feeding the flywheel
-  private final double SHOOTING_RPM_RANGE = 20;         // Allowed RPM error for flywheel
+  private static double CAM_ERROR = 1;           // Allowed aiming error in degrees
+  private static double TURRET_ROTATE_KP = 1.0 / 20.0;   // Proportional constant for turret rotate speed
+  private static double FLYWHEEL_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
+  private static double FLYWHEEL_P = 0.75;
+  private static double FLYWHEEL_I = 0.0;
+  private static double FLYWHEEL_D = 100.0;
+  private static double FLYWHEEL_F = 0.051;
+  private static double STARTING_FLYWHEEL_SPEED = 2700;
+  private static double RPM_TO_TICKS_MS = 2048.0/600.0;  // Conversion factor for rotational velocity
+  private static double TRIGGER_MOTOR_SPEED = 0.4;       // Maximum power for the motor feeding the flywheel
+  private static double SHOOTING_RPM_RANGE = 20;         // Allowed RPM error for flywheel
   //
-  private final double CAMERA_HEIGHT = 16.0;            // Limelight height above ground (inches)
-  private final double CAMERA_ANGLE  = 15.0;            // Limelight camera angle above horizontal (degrees)
-  private final double TARGET_HEIGHT = 98.25;           // Center of target above ground (inches)
-  private final double TARGET_HEIGHT_DELTA = TARGET_HEIGHT - CAMERA_HEIGHT;
+  private static double CAMERA_HEIGHT = 16.0;            // Limelight height above ground (inches)
+  private static double CAMERA_ANGLE  = 15.0;            // Limelight camera angle above horizontal (degrees)
+  private static double TARGET_HEIGHT = 98.25;           // Center of target above ground (inches)
+  private static double TARGET_HEIGHT_DELTA = TARGET_HEIGHT - CAMERA_HEIGHT;
+  //
+  private static double MANUAL_POWER = 0.5;             // Turret power for manual control
+
 
   public WPI_TalonSRX turretRotate;                     // Motor for rotating the turret
   private WPI_TalonSRX collectorBelt;                   // Motor for ball feed belt
@@ -105,6 +108,19 @@ public class shooter {
    */
   public double falconToRPM(double falcon){
     return falcon / RPM_TO_TICKS_MS;
+  }
+
+
+  /**
+   * Control turret rotation manual.  This is a potentiall fallback if autoAim fails.
+   * 
+   * @param ballShooterController Control turret rotatation with gamepad
+   */
+  public void manualAim(XboxController ballShooterController) {
+    double turretRotation;
+
+    turretRotation = ballShooterController.getX(GenericHID.Hand.kLeft) * MANUAL_POWER;
+    turretRotate.set(ControlMode.PercentOutput, turretRotation);
   }
 
 
