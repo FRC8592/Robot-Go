@@ -10,7 +10,8 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 public class driveTrain {
   // Constants
   private static final double DRIVE_POWER = 1.0;    // Forward/reverse power scaling
-  private static final double TURN_POWER  = 1.0;    // Turning power scaling
+  private static final double TURN_POWER  = 0.5;    // Turning power scaling
+  private static final double TURN_IN_PLACE_POWER  = 0.35;    // Turning power scaling
   private static final double RAMP_TIME   = 0.5;    // Smooth application of motor power
 
   // Motor controllers
@@ -70,12 +71,16 @@ public class driveTrain {
   
     // Combine and scale inputs
     throttle = (-forward + reverse) * DRIVE_POWER;
-    turn     = turn * TURN_POWER;
+
+    // Apply a different power curve for turn-in-place
+    if (!curveOff)
+      turn = turn * TURN_POWER;
+    else
+      turn = turn * TURN_IN_PLACE_POWER;
 
     // If reverseControl is being pressed, invert all inputs so the robot can be driven backwards
     if (reverseControl) {
       throttle = -throttle;
-      turn     = -turn;
     }
     
     // Send controls to the robot drive system

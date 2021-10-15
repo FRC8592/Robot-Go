@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller s
 import edu.wpi.first.wpilibj.GenericHID;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
@@ -29,22 +30,25 @@ public class shooter {
   private static double SHOOTING_RPM_RANGE = 20;         // Allowed RPM error for flywheel
   //
   private static double CAMERA_HEIGHT = 16.0;            // Limelight height above ground (inches)
-  private static double CAMERA_ANGLE  = 15.0;            // Limelight camera angle above horizontal (degrees)
+  private static double CAMERA_ANGLE  = 20.0;            // Limelight camera angle above horizontal (degrees)
   private static double TARGET_HEIGHT = 98.25;           // Center of target above ground (inches)
   private static double TARGET_HEIGHT_DELTA = TARGET_HEIGHT - CAMERA_HEIGHT;
   //
   private static double MANUAL_POWER = 0.5;             // Turret power for manual control
+  //
+  private static double TURRET_TICKS_PER_DEGREE = 1770 / 90;  // Encoder ticks per degree
 
-
+  // Motor controllers
   public WPI_TalonSRX turretRotate;                     // Motor for rotating the turret
   private WPI_TalonSRX collectorBelt;                   // Motor for ball feed belt
   private WPI_TalonSRX triggerMotor;                    // Motor for ball loading to the flywheel (fire!)
   private WPI_TalonFX flyWheel;                         // High speed flywheel motor
+  // Network Table entries
   private NetworkTableEntry tx;                         // Angle error (x) from LimeLight camera
   private NetworkTableEntry ty;                         // Angle error (y) from LimeLight camera
   private NetworkTableEntry ta;                         // Target area measurement from LimeLight camera
   private NetworkTableEntry tv;                         // Target valid indicator from Limelight camera
-
+  // Shared variables
   public boolean targetValid;     // Indicate when the Limelight camera has found a target
   public boolean targetLocked;    // Indicate when the turret is centered on the target
   public double  targetRange;     // Range from robot to target (inches)
@@ -59,6 +63,10 @@ public class shooter {
     collectorBelt     = new WPI_TalonSRX(config_hw.ballProcessCAN);
     triggerMotor      = new WPI_TalonSRX(config_hw.ballTriggerCAN);
     flyWheel          = new WPI_TalonFX(config_hw.turretLaunchCAN);
+
+    // Reset the turret rotation encoder
+    turretRotate.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder);
+    turretRotate.setSelectedSensorPosition(0);
 
     //settings for flywheel constant velocity mode
     flyWheel.configFactoryDefault();            // Load known defaults for all controller values
@@ -176,6 +184,17 @@ public class shooter {
     SmartDashboard.putNumber("Target Range", targetRange);
     SmartDashboard.putBoolean("Target Valid", targetValid);
     SmartDashboard.putBoolean("Target Locked", targetLocked);
+  }
+
+
+  /**
+   * Publish turret rotation angle on Smart Dashboard
+   */
+  public void postTurretAngle() {
+    double turretAngle;
+
+    turretAngle = turretRotate.getSelectedSensorPosition() / TURRET_TICKS_PER_DEGREE;
+    SmartDashboard.putNumber("Turret Angle", turretAngle);
   }
 
 

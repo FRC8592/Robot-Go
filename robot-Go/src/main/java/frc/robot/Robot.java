@@ -26,9 +26,9 @@ public class Robot extends TimedRobot {
   public XboxController driverController;
   public XboxController shooterController;
 
-  public shooter turretLauncher;
-
+  public shooter    turretLauncher;
   public driveTrain drive;
+  public collector  collectorControl;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -91,6 +91,8 @@ public class Robot extends TimedRobot {
     shooterController = new XboxController(1);
     turretLauncher    = new shooter();
     drive             = new driveTrain();
+    collectorControl  = new collector();
+
   }
 
   /** This function is called periodically during operator control. */
@@ -98,8 +100,13 @@ public class Robot extends TimedRobot {
   
   public void teleopPeriodic(){
     turretLauncher.autoAim(shooterController);
+    //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
     turretLauncher.ballShooter(shooterController);
+    turretLauncher.postTurretAngle();
+    //
     drive.driveTrainPeriodic(driverController);
+    //
+    collectorControl.collectorPeriodic(driverController);
   }
 
   /** This function is called once when the robot is disabled. */
