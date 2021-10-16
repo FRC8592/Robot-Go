@@ -54,6 +54,7 @@ public class shooter {
   public double  targetRange;     // Range from robot to target (inches)
   public boolean flyWheelReady;   // Indicate when flywheel velocity is acceptable
   
+  public static boolean autonomousEnabled;
   
   /**
    * This constructor will intialize the motors and internal variables for the robot turret
@@ -171,7 +172,7 @@ public class shooter {
     }
     else {
       targetLocked = false;
-      if (autoAimEnabled)
+      if (autoAimEnabled || autonomousEnabled)
         turretRotate.set(ControlMode.PercentOutput, turretSpeed);
       else
         turretRotate.set(ControlMode.PercentOutput, 0);
@@ -230,7 +231,7 @@ public class shooter {
 
     // Only allow the shooter to fire if the flywheel is ready
     // We could also add a check here for targetLocked and range to target (targetRange)
-    if ((ballInsert == 1) & flyWheelReady) {
+    if (((ballInsert == 1) || autonomousEnabled)  & flyWheelReady) {
       collectorBelt.set(ControlMode.PercentOutput, 1);
       triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);
     }
