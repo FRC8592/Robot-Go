@@ -87,4 +87,8 @@ public class driveTrain {
     robotDrive.curvatureDrive(throttle, turn, curveOff);
   }
 
+  public void autoDrive(){
+    robotDrive.curvatureDrive(0.3, 0, false);
+  }
+
 }

@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller stuff
-
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -29,6 +29,7 @@ public class Robot extends TimedRobot {
   public shooter    turretLauncher;
   public driveTrain drive;
   public collector  collectorControl;
+  private double initTime; 
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -64,7 +65,9 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
+    initTime = Timer.getFPGATimestamp();
     shooter.autonomousEnabled = true;
+    drive             = new driveTrain();
     turretLauncher    = new shooter();
     collectorControl  = new collector();
     shooterController = new XboxController(1);
@@ -76,6 +79,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
+    
     switch (m_autoSelected) {
       case kCustomAuto:
         // Put custom auto code here
@@ -86,6 +90,9 @@ public class Robot extends TimedRobot {
         turretLauncher.autoAim(shooterController);
         //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
         turretLauncher.ballShooter(shooterController);
+        if (Timer.getFPGATimestamp() - initTime >= 12){
+          drive.autoDrive();
+        }
         break;
     }
   }
