@@ -31,6 +31,7 @@ public class Robot extends TimedRobot {
   public collector  collectorControl;
   private double initTime; 
 
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -41,6 +42,11 @@ public class Robot extends TimedRobot {
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
     shooter.autonomousEnabled = false;
+    driverController  = new XboxController(0); 
+    shooterController = new XboxController(1);
+    turretLauncher    = new shooter();
+    drive             = new driveTrain();
+    collectorControl  = new collector();
   }
 
   /**
@@ -67,10 +73,6 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     initTime = Timer.getFPGATimestamp();
     shooter.autonomousEnabled = true;
-    drive             = new driveTrain();
-    turretLauncher    = new shooter();
-    collectorControl  = new collector();
-    shooterController = new XboxController(1);
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
@@ -90,7 +92,9 @@ public class Robot extends TimedRobot {
         turretLauncher.autoAim(shooterController);
         //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
         turretLauncher.ballShooter(shooterController);
-        if (Timer.getFPGATimestamp() - initTime >= 12){
+        if (Timer.getFPGATimestamp() - initTime >= 15){
+          drive.driveStop();
+        } else if(Timer.getFPGATimestamp() - initTime >= 12){
           drive.autoDrive();
         }
         break;
@@ -102,11 +106,6 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
 
     //Create the primary controller object
-    driverController  = new XboxController(0); 
-    shooterController = new XboxController(1);
-    turretLauncher    = new shooter();
-    drive             = new driveTrain();
-    collectorControl  = new collector();
     shooter.autonomousEnabled = false;
   }
 
