@@ -231,7 +231,10 @@ public class shooter {
 
     // Only allow the shooter to fire if the flywheel is ready
     // We could also add a check here for targetLocked and range to target (targetRange)
-    if (((ballInsert == 1) || autonomousEnabled)  & flyWheelReady) {
+    if (ballShooterController.getXButton()){
+      collectorBelt.set(ControlMode.PercentOutput, -1);
+      triggerMotor.set(ControlMode.PercentOutput, -TRIGGER_MOTOR_SPEED);
+    }else if (((ballInsert == 1) || autonomousEnabled)  & flyWheelReady) {
       collectorBelt.set(ControlMode.PercentOutput, 1);
       triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);
     }
@@ -240,6 +243,6 @@ public class shooter {
       triggerMotor.set(ControlMode.PercentOutput, 0);
     }
   }
-  
+
 
 }

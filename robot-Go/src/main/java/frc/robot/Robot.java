@@ -94,7 +94,7 @@ public class Robot extends TimedRobot {
         turretLauncher.ballShooter(shooterController);
         if (Timer.getFPGATimestamp() - initTime >= 15){
           drive.driveStop();
-        } else if(Timer.getFPGATimestamp() - initTime >= 12){
+        } else if(Timer.getFPGATimestamp() - initTime >= 14){
           drive.autoDrive();
         }
         break;
