@@ -63,6 +63,10 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
+    shooter.autonomousEnabled = true;
+    turretLauncher    = new shooter();
+    collectorControl  = new collector();
+    shooterController = new XboxController(1);
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
@@ -78,6 +82,9 @@ public class Robot extends TimedRobot {
       case kDefaultAuto:
       default:
         // Put default auto code here
+        turretLauncher.autoAim(shooterController);
+        //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
+        turretLauncher.ballShooter(shooterController);
         break;
     }
   }
@@ -92,7 +99,7 @@ public class Robot extends TimedRobot {
     turretLauncher    = new shooter();
     drive             = new driveTrain();
     collectorControl  = new collector();
-
+    shooter.autonomousEnabled = false;
   }
 
   /** This function is called periodically during operator control. */
@@ -106,7 +113,7 @@ public class Robot extends TimedRobot {
     //
     drive.driveTrainPeriodic(driverController);
     //
-    collectorControl.collectorPeriodic(driverController);
+    collectorControl.collectorPeriodic(shooterController);
   }
 
   /** This function is called once when the robot is disabled. */

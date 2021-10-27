@@ -30,7 +30,7 @@ public class shooter {
   private static double SHOOTING_RPM_RANGE = 20;         // Allowed RPM error for flywheel
   //
   private static double CAMERA_HEIGHT = 16.0;            // Limelight height above ground (inches)
-  private static double CAMERA_ANGLE  = 20.0;            // Limelight camera angle above horizontal (degrees)
+  private static double CAMERA_ANGLE  = 25.0;            // Limelight camera angle above horizontal (degrees)
   private static double TARGET_HEIGHT = 98.25;           // Center of target above ground (inches)
   private static double TARGET_HEIGHT_DELTA = TARGET_HEIGHT - CAMERA_HEIGHT;
   //
@@ -155,7 +155,7 @@ public class shooter {
     targetRange = TARGET_HEIGHT_DELTA / Math.tan(Math.toRadians(CAMERA_ANGLE + yError));
 
     // Co-driver control for auto-aim.  Turret movement is disabled without this button
-    autoAimEnabled = ballShooterController.getYButton();
+    autoAimEnabled = ballShooterController.getBumper(GenericHID.Hand.kLeft);
 
     // Setting power based on the xError causes the turret to slow down as the error approaches 0
     // This prevents the turret from overshooting 0 and oscillating back and forth
