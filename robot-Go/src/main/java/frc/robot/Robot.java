@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller stuff
-
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -29,7 +29,9 @@ public class Robot extends TimedRobot {
   public shooter    turretLauncher;
   public driveTrain drive;
   public collector  collectorControl;
+  private double initTime; 
 
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -39,6 +41,12 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    shooter.autonomousEnabled = false;
+    driverController  = new XboxController(0); 
+    shooterController = new XboxController(1);
+    turretLauncher    = new shooter();
+    drive             = new driveTrain();
+    collectorControl  = new collector();
   }
 
   /**
@@ -63,10 +71,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
+    initTime = Timer.getFPGATimestamp();
     shooter.autonomousEnabled = true;
-    turretLauncher    = new shooter();
-    collectorControl  = new collector();
-    shooterController = new XboxController(1);
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
@@ -75,6 +81,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
+    
     switch (m_autoSelected) {
       case kCustomAuto:
         // Put custom auto code here
@@ -85,6 +92,11 @@ public class Robot extends TimedRobot {
         turretLauncher.autoAim(shooterController);
         //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
         turretLauncher.ballShooter(shooterController);
+        if (Timer.getFPGATimestamp() - initTime >= 15){
+          drive.driveStop();
+        } else if(Timer.getFPGATimestamp() - initTime >= 14){
+          drive.autoDrive();
+        }
         break;
     }
   }
@@ -94,11 +106,6 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
 
     //Create the primary controller object
-    driverController  = new XboxController(0); 
-    shooterController = new XboxController(1);
-    turretLauncher    = new shooter();
-    drive             = new driveTrain();
-    collectorControl  = new collector();
     shooter.autonomousEnabled = false;
   }
 
