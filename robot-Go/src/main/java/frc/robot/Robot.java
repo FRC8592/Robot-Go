@@ -29,6 +29,7 @@ public class Robot extends TimedRobot {
   public shooter    turretLauncher;
   public driveTrain drive;
   public collector  collectorControl;
+  public Autonomous autonomous;
   private double initTime; 
 
   
@@ -74,6 +75,8 @@ public class Robot extends TimedRobot {
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
+
+    autonomous = new Autonomous(turretLauncher, drive);
   }
 
   /** This function is called periodically during autonomous. */
@@ -86,15 +89,7 @@ public class Robot extends TimedRobot {
         break;
       case kDefaultAuto:
       default:
-        // Put default auto code here
-        turretLauncher.autoAim(shooterController);
-        //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
-        turretLauncher.ballShooter(shooterController);
-        if (Timer.getFPGATimestamp() - initTime >= 15){
-          drive.driveStop();
-        } else if(Timer.getFPGATimestamp() - initTime >= 14){
-          drive.autoDrive();
-        }
+        autonomous.autoPeriodic();
         break;
     }
   }
@@ -110,9 +105,11 @@ public class Robot extends TimedRobot {
   @Override
   
   public void teleopPeriodic(){
-    turretLauncher.autoAim(shooterController);
+    turretLauncher.autoAim();
+    turretLauncher.teleopmoveTurret(shooterController);
     //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
-    turretLauncher.ballShooter(shooterController);
+    turretLauncher.startFlywheel();
+    turretLauncher.teleopBall(shooterController);
     turretLauncher.postTurretAngle();
     //
     drive.driveTrainPeriodic(driverController);

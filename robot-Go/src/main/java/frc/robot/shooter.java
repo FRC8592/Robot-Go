@@ -144,12 +144,10 @@ public class shooter {
    * 
    * @param ballShooterController Used to enable autoAim turret motion
    */
-  public void autoAim(XboxController ballShooterController) {
-    double  turretSpeed;
+  public void autoAim() {
     double  xError;
     double  yError;
     double  area;
-    boolean autoAimEnabled;
 
     // Read the Limelight data from the Network Tables
     xError      = tx.getDouble(0.0);
@@ -160,29 +158,11 @@ public class shooter {
     // Compute range to target.
     // Formula taken from https://docs.limelightvision.io/en/latest/cs_estimating_distance.html
     targetRange = TARGET_HEIGHT_DELTA / Math.tan(Math.toRadians(CAMERA_ANGLE + yError));
-
-    // Co-driver control for auto-aim.  Turret movement is disabled without this button
-    autoAimEnabled = ballShooterController.getBumper(GenericHID.Hand.kLeft);
-
+    
     // Setting power based on the xError causes the turret to slow down as the error approaches 0
     // This prevents the turret from overshooting 0 and oscillating back and forth
     // KP is a scaling factor that we tested
     turretSpeed = xError * TURRET_ROTATE_KP;
-
-    //move turret to drive x to be less than "CAM_ERROR" 
-    //x = 0 when the camera sees the target is in the center
-    // Only allow the turret to track when commanded
-    if (Math.abs(xError) < CAM_ERROR) {               // Turret is pointing at target (or no target)
-      targetLocked = targetValid;                     // We are only locked when targetValid
-      turretRotate.set(ControlMode.PercentOutput, 0); // Stop motor
-    }
-    else {
-      targetLocked = false;
-      if (autoAimEnabled)
-        turretRotate.set(ControlMode.PercentOutput, turretSpeed);
-      else
-        turretRotate.set(ControlMode.PercentOutput, 0);
-    }
 
     //post driver data to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", xError);
@@ -193,7 +173,7 @@ public class shooter {
     SmartDashboard.putBoolean("Target Locked", targetLocked);
   }
 
-  public void teleopAutoAim(){
+  public void moveTurret(){
         //move turret to drive x to be less than "CAM_ERROR" 
     //x = 0 when the camera sees the target is in the center
     // Only allow the turret to track when commanded
@@ -203,13 +183,18 @@ public class shooter {
     }
     else {
       targetLocked = false;
-      if (autoAimEnabled)
-        turretRotate.set(ControlMode.PercentOutput, turretSpeed);
-      else
-        turretRotate.set(ControlMode.PercentOutput, 0);
+      turretRotate.set(ControlMode.PercentOutput, turretSpeed);
     }
   }
 
+  public void teleopmoveTurret(XboxController ballshootController){
+    if (ballshootController.getBumper(GenericHID.Hand.kLeft)){
+      this.moveTurret();
+    }
+    else{
+      turretRotate.set(ControlMode.PercentOutput, 0);
+    }
+  }
 
   /**
    * Publish turret rotation angle on Smart Dashboard
@@ -226,13 +211,10 @@ public class shooter {
    * Control shooting the ball
    * @param ballShooterController Used to control when to shoot
    */
-  public void ballShooter(XboxController ballShooterController){
+  public void startFlywheel(){
     double flyWheelSetVelocity;
     double flyWheelVelocity;
     double ballInsert;
-
-    // Read shooting trigger
-    ballInsert = ballShooterController.getTriggerAxis(GenericHID.Hand.kRight);
 
     // Get flywheel setpoint RPM from Smart Dashboard.  This will allow drivers to adjust, if desperate
     flyWheelSetVelocity = SmartDashboard.getNumber("Flywheel RPM", STARTING_FLYWHEEL_SPEED);
@@ -252,20 +234,37 @@ public class shooter {
     SmartDashboard.putNumber("Velocity Setpoint", flyWheelSetVelocity);
     SmartDashboard.putBoolean("Flywheel Ready", flyWheelReady);
 
+  }
+
+  public void shootBall(){
     // Only allow the shooter to fire if the flywheel is ready
     // We could also add a check here for targetLocked and range to target (targetRange)
-    if (ballShooterController.getXButton()){
-      collectorBelt.set(ControlMode.PercentOutput, -1);
-      triggerMotor.set(ControlMode.PercentOutput, -TRIGGER_MOTOR_SPEED);
-    }else if (((ballInsert == 1) || autonomousEnabled)  & flyWheelReady) {
+    if (flyWheelReady) {
       collectorBelt.set(ControlMode.PercentOutput, 1);
       triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);
     }
-    else {
-      collectorBelt.set(ControlMode.PercentOutput, 0);
-      triggerMotor.set(ControlMode.PercentOutput, 0);
-    }
   }
 
+  public void stopBall(){
+    collectorBelt.set(ControlMode.PercentOutput, 0);
+    triggerMotor.set(ControlMode.PercentOutput, 0);
+  } 
+
+  public void unjamBall(){
+    collectorBelt.set(ControlMode.PercentOutput, -1);
+    triggerMotor.set(ControlMode.PercentOutput, -TRIGGER_MOTOR_SPEED);
+  }
+
+  public void teleopBall(XboxController ballshootController){
+    if (ballshootController.getXButton()){
+      this.unjamBall();
+    }
+    else if (ballshootController.getTriggerAxis(GenericHID.Hand.kRight) == 1){
+      this.shootBall();
+    }
+    else {
+      this.stopBall();
+    } 
+  }
 
 }
