@@ -9,19 +9,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller stuff
-import edu.wpi.first.wpilibj.GenericHID;
-
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import frc.robot.config_hw;
-
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.Timer;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -36,9 +24,19 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   //this defines "driverController" as an object
   public XboxController driverController;
+<<<<<<< HEAD
   public shooter turretLauncher;
   public driveTrain drive;
+=======
+  public XboxController shooterController;
 
+  public shooter    turretLauncher;
+  public driveTrain drive;
+  public collector  collectorControl;
+  private double initTime; 
+>>>>>>> origin
+
+  
   /**
    * This function is run when the robot is first started up and should be used for any
    * initialization code.
@@ -48,6 +46,11 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
+    driverController  = new XboxController(0); 
+    shooterController = new XboxController(1);
+    turretLauncher    = new shooter();
+    drive             = new driveTrain();
+    collectorControl  = new collector();
   }
 
   /**
@@ -72,6 +75,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
+    
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
@@ -80,6 +84,7 @@ public class Robot extends TimedRobot {
   /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {
+    
     switch (m_autoSelected) {
       case kCustomAuto:
         // Put custom auto code here
@@ -87,6 +92,14 @@ public class Robot extends TimedRobot {
       case kDefaultAuto:
       default:
         // Put default auto code here
+        turretLauncher.autoAim(shooterController);
+        //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
+        turretLauncher.ballShooter(shooterController);
+        if (Timer.getFPGATimestamp() - initTime >= 15){
+          drive.driveStop();
+        } else if(Timer.getFPGATimestamp() - initTime >= 14){
+          drive.autoDrive();
+        }
         break;
     }
   }
@@ -96,17 +109,33 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
 
     //Create the primary controller object
+<<<<<<< HEAD
     driverController  = new XboxController(0); 
     turretLauncher    = new shooter(); //make comment about shooter.java
     drive             = new driveTrain();//make comment about driveTrain.java
+=======
+>>>>>>> origin
   }
 
   /** This function is called periodically during operator control. */
   @Override
+<<<<<<< HEAD
   public void teleopPeriodic() {
     drive.driveTrainPeriodic(driverController);
     turretLauncher.autoAim();
 
+=======
+  
+  public void teleopPeriodic(){
+    turretLauncher.autoAim(shooterController);
+    //turretLauncher.manualAim(shooterController);  // In case of auto aim failure
+    turretLauncher.ballShooter(shooterController);
+    turretLauncher.postTurretAngle();
+    //
+    drive.driveTrainPeriodic(driverController);
+    //
+    collectorControl.collectorPeriodic(shooterController);
+>>>>>>> origin
   }
 
   /** This function is called once when the robot is disabled. */
