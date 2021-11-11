@@ -53,7 +53,13 @@ public class shooter {
   public boolean targetLocked;    // Indicate when the turret is centered on the target
   public double  targetRange;     // Range from robot to target (inches)
   public boolean flyWheelReady;   // Indicate when flywheel velocity is acceptable
-  
+  //Private autoaim variables
+   private double  turretSpeed;
+   private double  xError;
+   private double  yError;
+   private double  area;
+   private boolean autoAimEnabled;
+
   public static boolean autonomousEnabled;
   
   /**
@@ -172,7 +178,7 @@ public class shooter {
     }
     else {
       targetLocked = false;
-      if (autoAimEnabled || autonomousEnabled)
+      if (autoAimEnabled)
         turretRotate.set(ControlMode.PercentOutput, turretSpeed);
       else
         turretRotate.set(ControlMode.PercentOutput, 0);
@@ -185,6 +191,23 @@ public class shooter {
     SmartDashboard.putNumber("Target Range", targetRange);
     SmartDashboard.putBoolean("Target Valid", targetValid);
     SmartDashboard.putBoolean("Target Locked", targetLocked);
+  }
+
+  public void teleopAutoAim(){
+        //move turret to drive x to be less than "CAM_ERROR" 
+    //x = 0 when the camera sees the target is in the center
+    // Only allow the turret to track when commanded
+    if (Math.abs(xError) < CAM_ERROR) {               // Turret is pointing at target (or no target)
+      targetLocked = targetValid;                     // We are only locked when targetValid
+      turretRotate.set(ControlMode.PercentOutput, 0); // Stop motor
+    }
+    else {
+      targetLocked = false;
+      if (autoAimEnabled)
+        turretRotate.set(ControlMode.PercentOutput, turretSpeed);
+      else
+        turretRotate.set(ControlMode.PercentOutput, 0);
+    }
   }
 
 

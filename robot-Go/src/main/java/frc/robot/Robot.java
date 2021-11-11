@@ -41,7 +41,6 @@ public class Robot extends TimedRobot {
     m_chooser.setDefaultOption("Default Auto", kDefaultAuto);
     m_chooser.addOption("My Auto", kCustomAuto);
     SmartDashboard.putData("Auto choices", m_chooser);
-    shooter.autonomousEnabled = false;
     driverController  = new XboxController(0); 
     shooterController = new XboxController(1);
     turretLauncher    = new shooter();
@@ -71,8 +70,7 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void autonomousInit() {
-    initTime = Timer.getFPGATimestamp();
-    shooter.autonomousEnabled = true;
+    
     m_autoSelected = m_chooser.getSelected();
     // m_autoSelected = SmartDashboard.getString("Auto Selector", kDefaultAuto);
     System.out.println("Auto selected: " + m_autoSelected);
@@ -106,7 +104,6 @@ public class Robot extends TimedRobot {
   public void teleopInit() {
 
     //Create the primary controller object
-    shooter.autonomousEnabled = false;
   }
 
   /** This function is called periodically during operator control. */
