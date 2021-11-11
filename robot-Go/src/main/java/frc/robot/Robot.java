@@ -24,17 +24,12 @@ public class Robot extends TimedRobot {
   private final SendableChooser<String> m_chooser = new SendableChooser<>();
   //this defines "driverController" as an object
   public XboxController driverController;
-<<<<<<< HEAD
-  public shooter turretLauncher;
-  public driveTrain drive;
-=======
   public XboxController shooterController;
 
   public shooter    turretLauncher;
   public driveTrain drive;
   public collector  collectorControl;
   private double initTime; 
->>>>>>> origin
 
   
   /**

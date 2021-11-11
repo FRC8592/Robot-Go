@@ -184,30 +184,6 @@ public class shooter {
         turretRotate.set(ControlMode.PercentOutput, 0);
     }
 
-<<<<<<< HEAD
-    /**
-     * something 
-     * unique
-     */
-    public void autoAim(){
-        double turretSpeed;
-        double x;
-        double y;
-        double area; //can be written as "double x, y, area;"
-
-        //read values periodically
-        x = tx.getDouble(0.0);
-        y = ty.getDouble(0.0);
-        area = ta.getDouble(0.0);
-
-        //post to smart dashboard periodically
-        SmartDashboard.putNumber("LimelightX", x);
-        SmartDashboard.putNumber("LimelightY", y);
-        SmartDashboard.putNumber("LimelightArea", area);
-
-        turretSpeed = x/27; //this is our ratio on how fast the turret is allowed to move to get to its position
-        
-=======
     //post driver data to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", xError);
     SmartDashboard.putNumber("LimelightY", yError);
@@ -218,7 +194,6 @@ public class shooter {
   }
 
   public void teleopAutoAim(){
->>>>>>> origin
         //move turret to drive x to be less than "CAM_ERROR" 
     //x = 0 when the camera sees the target is in the center
     // Only allow the turret to track when commanded
