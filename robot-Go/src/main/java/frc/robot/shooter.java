@@ -125,29 +125,12 @@ public class shooter {
     return falcon / RPM_TO_TICKS_MS;
   }
 
-
-  /**
-   * Control turret rotation manual.  This is a potentiall fallback if autoAim fails.
-   * 
-   * @param ballShooterController Control turret rotatation with gamepad
-   */
-  public void manualAim(XboxController ballShooterController) {
-    double turretRotation;
-
-    turretRotation = ballShooterController.getX(GenericHID.Hand.kLeft) * MANUAL_POWER;
-    turretRotate.set(ControlMode.PercentOutput, turretRotation);
-  }
-
-
   /**
    * Read the target x error from the Limelight camera and move the turret until the error is 0
    * 
    * @param ballShooterController Used to enable autoAim turret motion
    */
   public void autoAim() {
-    double  xError;
-    double  yError;
-    double  area;
 
     // Read the Limelight data from the Network Tables
     xError      = tx.getDouble(0.0);
@@ -173,8 +156,8 @@ public class shooter {
     SmartDashboard.putBoolean("Target Locked", targetLocked);
   }
 
-  public void moveTurret(){
-        //move turret to drive x to be less than "CAM_ERROR" 
+/**move turret to drive x to be less than "CAM_ERROR"*/
+  public void moveTurret(){ 
     //x = 0 when the camera sees the target is in the center
     // Only allow the turret to track when commanded
     if (Math.abs(xError) < CAM_ERROR) {               // Turret is pointing at target (or no target)
@@ -182,18 +165,22 @@ public class shooter {
       turretRotate.set(ControlMode.PercentOutput, 0); // Stop motor
     }
     else {
-      targetLocked = false;
+      targetLocked = false; //moving turret to lock onto target
       turretRotate.set(ControlMode.PercentOutput, turretSpeed);
     }
   }
-
+  /** turret can be controlled by autoaim and driver
+   * when target isn't locked can use manual aim*/
   public void teleopmoveTurret(XboxController ballshootController){
     if (ballshootController.getBumper(GenericHID.Hand.kLeft)){
       this.moveTurret();
     }
     else{
-      turretRotate.set(ControlMode.PercentOutput, 0);
+      double turretRotation = ballshootController.getX(GenericHID.Hand.kLeft) * MANUAL_POWER; //manual turret movement
+      turretRotate.set(ControlMode.PercentOutput, turretRotation);
+
     }
+    
   }
 
   /**
@@ -208,13 +195,13 @@ public class shooter {
 
 
   /**
-   * Control shooting the ball
+   * Uses flywheel initial speed to bring it up to desired shooting speed
+   * Indicates whether flyWheelReady is true or not
    * @param ballShooterController Used to control when to shoot
    */
   public void startFlywheel(){
     double flyWheelSetVelocity;
     double flyWheelVelocity;
-    double ballInsert;
 
     // Get flywheel setpoint RPM from Smart Dashboard.  This will allow drivers to adjust, if desperate
     flyWheelSetVelocity = SmartDashboard.getNumber("Flywheel RPM", STARTING_FLYWHEEL_SPEED);
@@ -235,26 +222,30 @@ public class shooter {
     SmartDashboard.putBoolean("Flywheel Ready", flyWheelReady);
 
   }
-
+  /**Shoots ball if flywheel is ready */
   public void shootBall(){
-    // Only allow the shooter to fire if the flywheel is ready
+    //Only allow the shooter to fire if the flywheel is ready
     // We could also add a check here for targetLocked and range to target (targetRange)
+    //Turns on other motors needed to shoot the ball
     if (flyWheelReady) {
       collectorBelt.set(ControlMode.PercentOutput, 1);
       triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);
     }
   }
-
+  /**Stops motors used to shoot ball*/
   public void stopBall(){
     collectorBelt.set(ControlMode.PercentOutput, 0);
     triggerMotor.set(ControlMode.PercentOutput, 0);
   } 
-
+  /**Reverses motors used to move ball to flywheel*/
   public void unjamBall(){
     collectorBelt.set(ControlMode.PercentOutput, -1);
     triggerMotor.set(ControlMode.PercentOutput, -TRIGGER_MOTOR_SPEED);
   }
-
+  /**
+   * Driver controlled shooting mechanisms
+   * unjam ball, shoot ball, stop ball
+   */
   public void teleopBall(XboxController ballshootController){
     if (ballshootController.getXButton()){
       this.unjamBall();

@@ -21,27 +21,27 @@ public class Autonomous {
 
     public void autoPeriodic() {
         switch(currentState) {
-            case SHOOT: 
-                turretLauncher.autoAim();      //turns turret towards target
-                turretLauncher.moveTurret();
+            case SHOOT:                   //shoots ball for 6 seconds
+                turretLauncher.autoAim();       
+                turretLauncher.moveTurret();    
                 turretLauncher.startFlywheel(); 
                 turretLauncher.shootBall();
-                if (autonomousTimer.get() >= 6){
+                if (autonomousTimer.get() >= 6){       //after 6 seconds we stop shooting and start driving
                     autonomousTimer.reset();
                     turretLauncher.stopBall();
                     currentState = AutoState.DRIVE;
                 }
                 break;
 
-            case DRIVE:
+            case DRIVE:                  //drives robot forward for 1 sec
                 drive.autoDrive();
-                if (autonomousTimer.get() >= 1){
+                if (autonomousTimer.get() >= 1){       //after 1 second we stop
                     autonomousTimer.reset();
                     currentState = AutoState.STOP;
                 }
                 break;
             
-            case STOP:
+            case STOP:                  //autonomous finished
                 drive.driveStop();
                 break;
         }

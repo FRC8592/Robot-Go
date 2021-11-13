@@ -101,7 +101,12 @@ public class Robot extends TimedRobot {
     //Create the primary controller object
   }
 
-  /** This function is called periodically during operator control. */
+  /** This function is called periodically during operator control. 
+   * Aim turret
+   * Run Flywheel and shooting mechanisms
+   * Run drivetrain and collector
+   * All done by driver
+  */
   @Override
   
   public void teleopPeriodic(){

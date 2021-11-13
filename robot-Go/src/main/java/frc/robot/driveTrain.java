@@ -52,7 +52,7 @@ public class driveTrain {
   	robotDrive = new DifferentialDrive(rightDrive, leftDrive);
   }
 
-
+/**Drives robot: forwards, backwards, turning*/
   public void driveTrainPeriodic(XboxController driveTrainController){
     double  forward;
     double  reverse;
