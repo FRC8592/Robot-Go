@@ -17,8 +17,9 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class shooter {
   //constants
-  private static double CAM_ERROR = 1;           // Allowed aiming error in degrees
-  private static double TURRET_ROTATE_KP = 1.0 / 20.0;   // Proportional constant for turret rotate speed
+  private static double CAM_ERROR = 0.5;           // Allowed aiming error in degrees
+  private static double LOCK_ERROR = 1.0;
+  private static double TURRET_ROTATE_KP = 1.0 / 15.0;   // Proportional constant for turret rotate speed
   private static double FLYWHEEL_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
   private static double FLYWHEEL_P = 0.75;
   private static double FLYWHEEL_I = 0.0;
@@ -147,6 +148,13 @@ public class shooter {
     // KP is a scaling factor that we tested
     turretSpeed = xError * TURRET_ROTATE_KP;
 
+    if (Math.abs(xError) < LOCK_ERROR) {               // Turret is pointing at target (or no target)
+      targetLocked = targetValid;                     // We are only locked when targetValid
+    }
+    else{
+      targetLocked = false;
+    }
+
     //post driver data to smart dashboard periodically
     SmartDashboard.putNumber("LimelightX", xError);
     SmartDashboard.putNumber("LimelightY", yError);
@@ -161,11 +169,9 @@ public class shooter {
     //x = 0 when the camera sees the target is in the center
     // Only allow the turret to track when commanded
     if (Math.abs(xError) < CAM_ERROR) {               // Turret is pointing at target (or no target)
-      targetLocked = targetValid;                     // We are only locked when targetValid
       turretRotate.set(ControlMode.PercentOutput, 0); // Stop motor
     }
     else {
-      targetLocked = false; //moving turret to lock onto target
       turretRotate.set(ControlMode.PercentOutput, turretSpeed);
     }
   }
