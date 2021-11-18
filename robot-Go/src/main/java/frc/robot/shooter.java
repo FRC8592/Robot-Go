@@ -17,7 +17,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 
 public class shooter {
   //constants
-  private static double CAM_ERROR = 0.5;           // Allowed aiming error in degrees
+  private static double TURRET_ERROR = 0.5;           // Allowed aiming error in degrees
   private static double LOCK_ERROR = 1.0;
   private static double TURRET_ROTATE_KP = 1.0 / 15.0;   // Proportional constant for turret rotate speed
   private static double FLYWHEEL_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
@@ -164,11 +164,11 @@ public class shooter {
     SmartDashboard.putBoolean("Target Locked", targetLocked);
   }
 
-/**move turret to drive x to be less than "CAM_ERROR"*/
+/**move turret to drive x to be less than "TURRET_ERROR"*/
   public void moveTurret(){ 
     //x = 0 when the camera sees the target is in the center
     // Only allow the turret to track when commanded
-    if (Math.abs(xError) < CAM_ERROR) {               // Turret is pointing at target (or no target)
+    if (Math.abs(xError) < TURRET_ERROR) {               // Turret is pointing at target (or no target)
       turretRotate.set(ControlMode.PercentOutput, 0); // Stop motor
     }
     else {
