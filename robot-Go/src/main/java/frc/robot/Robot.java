@@ -117,7 +117,7 @@ public class Robot extends TimedRobot {
     //
     drive.driveTrainPeriodic(driverController);
     //
-    collectorControl.collectorPeriodic(shooterController);
+    collectorControl.collectorPeriodic(drive, shooterController);
   }
 
   /** This function is called once when the robot is disabled. */

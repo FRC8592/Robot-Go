@@ -59,7 +59,6 @@ public class shooter {
    private double  xError;
    private double  yError;
    private double  area;
-   private boolean autoAimEnabled;
 
   public static boolean autonomousEnabled;
   

@@ -4,21 +4,29 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller stuff
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
+
 import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 public class driveTrain {
   // Constants
-  private static final double DRIVE_POWER = 1.0;    // Forward/reverse power scaling
-  private static final double TURN_POWER  = 0.6;    // Turning power scaling
+  private static final double DRIVE_POWER = 1.0;              // Forward/reverse power scaling
+  private static final double TURN_POWER  = 0.6;              // Turning power scaling
   private static final double TURN_IN_PLACE_POWER  = 0.45;    // Turning power scaling
-  private static final double RAMP_TIME   = 0.25;    // Smooth application of motor power
+  private static final double RAMP_TIME   = 0.25;             // Smooth application of motor power
+  //
+  private static final double GEAR_RATIO    = 10.75;    // Motor-to-wheel gearing
+  private static final double WHEEL_DIAMETER = 0.1524;   // 6 inches = 0.1524 meters
+  private static final double TICKS_PER_REV = 2048.0;   // Falcon 500 encoder ticks per revolution
+  //
+  private static final double TICKS_TO_MS   = (1 / (TICKS_PER_REV * GEAR_RATIO)) * WHEEL_DIAMETER * Math.PI;
 
   // Motor controllers
-  public WPI_TalonFX frontLeft;
-  public WPI_TalonFX frontRight;
-  public WPI_TalonFX rearLeft;
-  public WPI_TalonFX rearRight;
+  private WPI_TalonFX frontLeft;
+  private WPI_TalonFX frontRight;
+  private WPI_TalonFX rearLeft;
+  private WPI_TalonFX rearRight;
 
   // Motor groups
 	SpeedControllerGroup leftDrive;
@@ -37,6 +45,12 @@ public class driveTrain {
     rearLeft   = new WPI_TalonFX(config_hw.leftBackCAN);
     frontRight = new WPI_TalonFX(config_hw.rightFrontCAN);
     rearRight  = new WPI_TalonFX(config_hw.rightBackCAN);
+
+    // Configure encoder for each motor (used to monitor velocity)
+    frontLeft.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
+    rearLeft.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
+    frontRight.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
+    rearRight.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor, 0, 0);
 
     // Configure motor ramp time to smooth out acceleration
 		frontLeft.configOpenloopRamp(RAMP_TIME);
@@ -93,6 +107,23 @@ public class driveTrain {
 
   public void driveStop(){
     robotDrive.curvatureDrive(0, 0, false);
+  }
+
+  /**
+  * Returns average wheel speed in m/s
+  * Speed is derived from motor RPM and does not account for wheel slippage
+  * @return
+  * Wheel speed in m/s (double)
+  */
+  public double getDriveSpeed(){
+    double motorTPS;      // Average ticks per second from left and right motors
+    double wheelSpeedMS;  // Wheel revolutions per second
+
+    // Falcons report ticks per 100ms.  Multiple by 10 to get ticks per second.  Divide by two to get average of left and right
+    motorTPS     = (frontLeft.getSelectedSensorVelocity() + frontRight.getSelectedSensorVelocity()) * 5.0;
+    wheelSpeedMS = motorTPS * TICKS_TO_MS;
+
+    return wheelSpeedMS;
   }
 
 }
