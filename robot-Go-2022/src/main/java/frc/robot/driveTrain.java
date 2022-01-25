@@ -78,12 +78,12 @@ public class driveTrain {
     boolean curveOff;
 
     // Read gamepad controls
-    forward = driveTrainController.getTriggerAxis(GenericHID.Hand.kRight);  // Right trigger
-    reverse = driveTrainController.getTriggerAxis(GenericHID.Hand.kLeft);   // Left Trigger
-    turn    = driveTrainController.getX(GenericHID.Hand.kLeft);             // Left joystick
+    forward = driveTrainController.getRightTriggerAxis();  // Right trigger
+    reverse = driveTrainController.getLeftTriggerAxis();   // Left Trigger
+    turn    = driveTrainController.getLeftX();             // Left joystick
     //
     reverseControl = driveTrainController.getBButton();                      // B button
-    curveOff       = driveTrainController.getBumper(GenericHID.Hand.kRight); // Right bumper
+    curveOff       = driveTrainController.getRightBumper(); // Right bumper
   
     // Combine and scale inputs
     throttle = (-forward + reverse) * DRIVE_POWER;

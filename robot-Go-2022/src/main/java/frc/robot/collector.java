@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj.XboxController;
 // Pneumatic control classes
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 
 // Motor control classes
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -24,7 +25,7 @@ public class collector {
     private DoubleSolenoid collectorSolenoid;
     private boolean        collectorInboard = true;
 
-    // Intake spin motor
+    // Intake spin motor.  Configure for velocity PID control
     private static double INTAKE_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
     private static double INTAKE_P = 0.25;
     private static double INTAKE_I = 0.0;
@@ -45,15 +46,12 @@ public class collector {
      */
     public collector() {
         // Create pneumatic controller objects
-        robotCompressor    = new Compressor(config_hw.compressorCAN);
-        collectorSolenoid  = new DoubleSolenoid(config_hw.compressorCAN, config_hw.intakeSolPortA, config_hw.intakeSolPortB);
+        robotCompressor    = new Compressor(config_hw.compressorCAN, PneumaticsModuleType.CTREPCM);
+        collectorSolenoid  = new DoubleSolenoid(config_hw.compressorCAN, PneumaticsModuleType.CTREPCM, config_hw.intakeSolPortA, config_hw.intakeSolPortB);
 
-        // ****************************************************************************
-        // *** DANGER : Closed loop control must be enabled to prevent overpressure ***
-        // ****************************************************************************
-        robotCompressor.setClosedLoopControl(true);             // Cycle to control pressure (important!)
-        robotCompressor.start();                                // Start compressor running
-        //robotCompressor.stop();                               // Uncomment this line to test without compressor
+        // Initial pneumatic configuration
+        robotCompressor.enableDigital();                        // Start compressor running
+        //robotCompressor.disable();                              // Uncomment this line to test without compressor
         collectorSolenoid.set(DoubleSolenoid.Value.kReverse);   // Move collector inboard
         collectorInboard = true;
 
@@ -61,18 +59,18 @@ public class collector {
         intakeSpin = new WPI_TalonSRX(config_hw.intakeSpinCAN);
 
         // Settings for intake constant velocity mode
-        intakeSpin.configFactoryDefault();            // Load known defaults for all controller values
-        intakeSpin.enableVoltageCompensation(true);   // Enable voltage compensation
+        intakeSpin.configFactoryDefault();              // Load known defaults for all controller values
+        intakeSpin.enableVoltageCompensation(true);     // Enable voltage compensation
         intakeSpin.configVoltageCompSaturation(INTAKE_VOLTAGE);
-        //intakeSpin.setInverted(true);                 // Flywheel runs backwards without this
+        //intakeSpin.setInverted(true);                 // TODO: Is this needed?
         intakeSpin.configSelectedFeedbackSensor(TalonSRXFeedbackDevice.QuadEncoder, 0, 0);
+        intakeSpin.setSensorPhase(true);                // Inverts sensor phase 
         intakeSpin.config_kP(0, INTAKE_P);
         intakeSpin.config_kI(0, INTAKE_I);
         intakeSpin.config_kD(0, INTAKE_D);
         intakeSpin.config_kF(0, INTAKE_F);
         intakeSpin.configClosedloopRamp(1);
-        //intakeSpin.set(ControlMode.Velocity, 0);
-        intakeSpin.set(ControlMode.PercentOutput, 0);
+        intakeSpin.set(ControlMode.Velocity, 0);
     }
 
 
@@ -113,11 +111,11 @@ public class collector {
         // outboard position.  The unjam button has priority in all situations
         //
         if (driveTrainController.getXButton()) {
-            setIntakeSpeed(0.0);           // Reverse motor to unjam
+            setIntakeSpeed(-1);                 // Reverse motor to unjam
         } else if (!collectorInboard) {
-            setIntakeSpeed(intakeSpeedMSSet);  // Run collector when outboard (speed relative to chassis wheel speed)
+            setIntakeSpeed(intakeSpeedMSSet);   // Run collector when outboard (speed relative to chassis wheel speed)
         } else {
-            setIntakeSpeed(0);              // Stop motor when inboard
+            setIntakeSpeed(0);                  // Stop motor when inboard
         }
     }
 
@@ -143,12 +141,10 @@ public class collector {
     * Wheel speed in m/s (double)
     */
     public double getIntakeSpeed(){
-        double motorTPS;      // Average ticks per second from intake motor
-        double wheelSpeedMS;  // Wheel revolutions per second
+        double wheelSpeedMS;        // wheel speed in m/s
 
         // Talon SRX reports ticks per 100ms.  Multiple by 10 to get ticks per second.
-        motorTPS     = intakeSpin.getSelectedSensorVelocity() * 10.0;
-        wheelSpeedMS = motorTPS * TICKS_TO_MS;
+        wheelSpeedMS = intakeSpin.getSelectedSensorVelocity() * TICKS_TO_MS * 10;
 
         return wheelSpeedMS;
     }
