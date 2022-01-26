@@ -39,7 +39,9 @@ public class collector {
     private static final double TICKS_PER_REV  = 1024.0;    // Redline encoder pulses per revolution
     //
     private static final double TICKS_TO_MS = (1 / (TICKS_PER_REV * GEAR_RATIO)) * WHEEL_DIAMETER * Math.PI;
-    private static final double MS_TO_TICKS = 1 / TICKS_TO_MS;  
+    private static final double MS_TO_TICKS = 1 / TICKS_TO_MS;
+    //
+    private static final double INTAKE_UNJAM_MS = 1.0;      // Unjam wheel velocity in m/s
 
     /**
      * This constructor will initialize hardware and variables for the collector
@@ -111,11 +113,11 @@ public class collector {
         // outboard position.  The unjam button has priority in all situations
         //
         if (driveTrainController.getXButton()) {
-            setIntakeSpeed(-1);                 // Reverse motor to unjam
+            setIntakeSpeed(-INTAKE_UNJAM_MS);     // Reverse motor to unjam
         } else if (!collectorInboard) {
-            setIntakeSpeed(intakeSpeedMSSet);   // Run collector when outboard (speed relative to chassis wheel speed)
+            setIntakeSpeed(intakeSpeedMSSet);           // Run collector when outboard (speed relative to chassis wheel speed)
         } else {
-            setIntakeSpeed(0);                  // Stop motor when inboard
+            setIntakeSpeed(0);                          // Stop motor when inboard
         }
     }
 

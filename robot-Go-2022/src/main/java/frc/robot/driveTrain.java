@@ -1,15 +1,14 @@
 package frc.robot;
 
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller stuff
+import edu.wpi.first.wpilibj.XboxController;    // This puts in the xbox contoller stuff
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
+import edu.wpi.first.wpilibj.motorcontrol.*;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class driveTrain {
   // Constants
@@ -31,8 +30,8 @@ public class driveTrain {
   private WPI_TalonFX rearRight;
 
   // Motor groups
-	SpeedControllerGroup leftDrive;
-	SpeedControllerGroup rightDrive;
+	MotorControllerGroup leftDrive;
+	MotorControllerGroup rightDrive;
 	  
 	// Differential drive class
   DifferentialDrive robotDrive;
@@ -61,8 +60,8 @@ public class driveTrain {
 	  rearRight.configOpenloopRamp(RAMP_TIME);
 	
 		// Pair up motors into control groups
-		leftDrive  = new SpeedControllerGroup(frontLeft, rearLeft);
-		rightDrive = new SpeedControllerGroup(frontRight, rearRight);
+		leftDrive  = new MotorControllerGroup(frontLeft, rearLeft);
+		rightDrive = new MotorControllerGroup(frontRight, rearRight);
 		  
 		// Initialize drive system
   	robotDrive = new DifferentialDrive(rightDrive, leftDrive);
