@@ -66,6 +66,8 @@ public class collector {
         intakeSpin.configVoltageCompSaturation(INTAKE_VOLTAGE);
         //intakeSpin.setInverted(true);                 // Flywheel runs backwards without this
         intakeSpin.configSelectedFeedbackSensor(TalonSRXFeedbackDevice.QuadEncoder, 0, 0);
+        intakeSpin.setSensorPhase(true);
+    
         intakeSpin.config_kP(0, INTAKE_P);
         intakeSpin.config_kI(0, INTAKE_I);
         intakeSpin.config_kD(0, INTAKE_D);
