@@ -25,7 +25,7 @@ public class shooter {
   private static double FLYWHEEL_I = 0.0;
   private static double FLYWHEEL_D = 100.0;
   private static double FLYWHEEL_F = 0.051;
-  private static double STARTING_FLYWHEEL_SPEED = 2700;
+  private static double STARTING_FLYWHEEL_SPEED = 2570;
   private static double RPM_TO_TICKS_MS = 2048.0/600.0;  // Conversion factor for rotational velocity
   private static double TRIGGER_MOTOR_SPEED = 0.4;       // Maximum power for the motor feeding the flywheel
   private static double SHOOTING_RPM_RANGE = 20;         // Allowed RPM error for flywheel
@@ -38,6 +38,9 @@ public class shooter {
   private static double MANUAL_POWER = 0.5;             // Turret power for manual control
   //
   private static double TURRET_TICKS_PER_DEGREE = 1770 / 90;  // Encoder ticks per degree
+
+  private final double rpm[] = {2510, 2550, 2570, 2630};
+  private final double distance[] = {134, 147, 161, 176};
 
   // Motor controllers
   public WPI_TalonSRX turretRotate;                     // Motor for rotating the turret
@@ -207,7 +210,24 @@ public class shooter {
    */
   public void startFlywheel(){
     double flyWheelSetVelocity;
+    double flyWheelCalculatedVelocity;
     double flyWheelVelocity;
+    int arrayIndex;
+    double slope;
+    double b;
+
+    if (targetRange < 173 && targetRange >= 134){
+      arrayIndex = (int)((targetRange - 134) / 13);
+      slope = (rpm[arrayIndex+1] - rpm[arrayIndex]) / (distance[arrayIndex+1] - distance[arrayIndex]);
+      //b = rpm[arrayIndex] - (slope * distance[arrayIndex]);
+      flyWheelCalculatedVelocity = rpm[arrayIndex] + (slope * (targetRange - distance[arrayIndex]));
+      //flyWheelCalculatedVelocity = slope * targetRange + b;
+    }
+    else{
+      flyWheelCalculatedVelocity = STARTING_FLYWHEEL_SPEED;
+    }
+    SmartDashboard.putNumber("Flywheel Setpoint RPM", flyWheelCalculatedVelocity);
+
 
     // Get flywheel setpoint RPM from Smart Dashboard.  This will allow drivers to adjust, if desperate
     flyWheelSetVelocity = SmartDashboard.getNumber("Flywheel RPM", STARTING_FLYWHEEL_SPEED);

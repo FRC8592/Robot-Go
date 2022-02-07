@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 public class driveTrain {
   // Constants
-  private static final double DRIVE_POWER = 1.0;    // Forward/reverse power scaling
+  private static final double DRIVE_POWER = 0.5;    // Forward/reverse power scaling
   private static final double TURN_POWER  = 0.6;    // Turning power scaling
   private static final double TURN_IN_PLACE_POWER  = 0.45;    // Turning power scaling
   private static final double RAMP_TIME   = 0.25;    // Smooth application of motor power
