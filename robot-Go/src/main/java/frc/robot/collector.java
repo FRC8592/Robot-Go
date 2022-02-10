@@ -26,16 +26,18 @@ public class collector {
 
     // Intake spin motor
     private static double INTAKE_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
-    private static double INTAKE_P = 0.25;
+    private static double INTAKE_P = 0.0;
     private static double INTAKE_I = 0.0;
     private static double INTAKE_D = 0.0;
-    private static double INTAKE_F = 0.051;
+    private static double INTAKE_F = 0.023;
     private WPI_TalonSRX  intakeSpin;
 
     // Parameters for collector speed
     private static final double GEAR_RATIO     = 4.0;       // Motor-to-wheel gearing
-    private static final double WHEEL_DIAMETER = 0.1016;    // 4 inches = 0.1524 meters
+    private static final double WHEEL_DIAMETER = 0.0508;    // 2 inches = 0.0.508 meters
     private static final double TICKS_PER_REV  = 1024.0;    // Redline encoder pulses per revolution
+    //
+    private static final double COLLECTOR_SPEED_ADDER = 2.0; // In m/s
     //
     private static final double TICKS_TO_MS = (1 / (TICKS_PER_REV * GEAR_RATIO)) * WHEEL_DIAMETER * Math.PI;
     private static final double MS_TO_TICKS = 1 / TICKS_TO_MS;  
@@ -93,7 +95,7 @@ public class collector {
         //
         wheelSpeedMSActual  = drive.getDriveSpeed();
         intakeSpeedMSActual = getIntakeSpeed();
-        intakeSpeedMSSet    = wheelSpeedMSActual + 1;     // Run the intake slightly faster than the drive wheels.
+        intakeSpeedMSSet    = wheelSpeedMSActual + COLLECTOR_SPEED_ADDER;     // Run the intake slightly faster than the drive wheels.
         SmartDashboard.putNumber("Wheel m/s",  wheelSpeedMSActual);
         SmartDashboard.putNumber("Intake m/s", intakeSpeedMSActual);
         SmartDashboard.putNumber("Intake Set m/s", intakeSpeedMSSet);

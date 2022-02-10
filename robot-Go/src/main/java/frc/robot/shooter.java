@@ -25,7 +25,8 @@ public class shooter {
     private static double FLYWHEEL_I = 0.0;
     private static double FLYWHEEL_D = 100.0;
     private static double FLYWHEEL_F = 0.051;
-    private static double STARTING_FLYWHEEL_SPEED = 2700;
+    //private static double STARTING_FLYWHEEL_SPEED = 2700;
+    private static double STARTING_FLYWHEEL_SPEED = 0;
     private static double RPM_TO_TICKS_MS = 2048.0 / 600.0;     // Conversion factor for rotational velocity
     private static double TRIGGER_MOTOR_SPEED = 0.4;            // Maximum power for the motor feeding the flywheel
     private static double SHOOTING_RPM_RANGE = 20;              // Allowed RPM error for flywheel
@@ -101,6 +102,9 @@ public class shooter {
         targetLocked  = false;
         targetRange   = 0.0;
         flyWheelReady = false;
+
+        // Set default value for flywheel RPM
+        SmartDashboard.putNumber("Flywheel RPM", STARTING_FLYWHEEL_SPEED);
     }
 
 
