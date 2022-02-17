@@ -27,10 +27,12 @@ public class collector {
 
     // Intake spin motor
     private static double INTAKE_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
-    private static double INTAKE_P = 0.25;
+//    private static double INTAKE_P = 0.25;
+    private static double INTAKE_P = 0.07;
     private static double INTAKE_I = 0.0;
     private static double INTAKE_D = 0.0;
-    private static double INTAKE_F = 0.051;
+    private static double INTAKE_F = 0.029;
+//    private static double INTAKE_F = 0.051;
     private WPI_TalonSRX  intakeSpin;
 
     // Parameters for collector speed
@@ -72,6 +74,8 @@ public class collector {
         intakeSpin.config_kI(0, INTAKE_I);
         intakeSpin.config_kD(0, INTAKE_D);
         intakeSpin.config_kF(0, INTAKE_F);
+        SmartDashboard.putNumber("intakeP", INTAKE_P);
+        SmartDashboard.putNumber("intakeF", INTAKE_F);
         intakeSpin.configClosedloopRamp(1);
         //intakeSpin.set(ControlMode.Velocity, 0);
         intakeSpin.set(ControlMode.PercentOutput, 0);
@@ -83,6 +87,12 @@ public class collector {
      * @param driveTrainController Raise and lower collector.  Reverse mechanism to unjam
      */
     public void collectorPeriodic(driveTrain drive, XboxController driveTrainController) {
+
+        double p = SmartDashboard.getNumber("intakeP", 0.0);
+        double f = SmartDashboard.getNumber("intakeF", 0.0);
+        intakeSpin.config_kD(0, p);
+        intakeSpin.config_kF(0, f);
+
         double wheelSpeedMSActual;
         double intakeSpeedMSActual;
         double intakeSpeedMSSet;
@@ -93,10 +103,12 @@ public class collector {
         //
         wheelSpeedMSActual  = drive.getDriveSpeed();
         intakeSpeedMSActual = getIntakeSpeed();
-        intakeSpeedMSSet    = wheelSpeedMSActual + 1;     // Run the intake slightly faster than the drive wheels.
+        intakeSpeedMSSet    = wheelSpeedMSActual + 1.0;     // Run the intake slightly faster than the drive wheels.
+//        intakeSpeedMSSet = driveTrainController.getRightTriggerAxis() * 20.0; // tmp
         SmartDashboard.putNumber("Wheel m/s",  wheelSpeedMSActual);
         SmartDashboard.putNumber("Intake m/s", intakeSpeedMSActual);
         SmartDashboard.putNumber("Intake Set m/s", intakeSpeedMSSet);
+
 
         //
         // Move the collector inboard or outboard
