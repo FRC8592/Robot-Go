@@ -7,10 +7,11 @@ package frc.robot;
 // Smart Dashboard and controller classes
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.XboxController;
-
+import edu.wpi.first.hal.CTREPCMJNI;
 // Pneumatic control classes
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
 
 // Motor control classes
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -26,18 +27,18 @@ public class collector {
 
     // Intake spin motor
     private static double INTAKE_VOLTAGE = 11;   // Maximum controller voltage for voltage compensation
-    private static double INTAKE_P = 0.0;
+//    private static double INTAKE_P = 0.25;
+    private static double INTAKE_P = 0.07;
     private static double INTAKE_I = 0.0;
     private static double INTAKE_D = 0.0;
-    private static double INTAKE_F = 0.023;
+    private static double INTAKE_F = 0.029;
+//    private static double INTAKE_F = 0.051;
     private WPI_TalonSRX  intakeSpin;
 
     // Parameters for collector speed
     private static final double GEAR_RATIO     = 4.0;       // Motor-to-wheel gearing
-    private static final double WHEEL_DIAMETER = 0.0508;    // 2 inches = 0.0.508 meters
+    private static final double WHEEL_DIAMETER = 0.1016;    // 4 inches = 0.1524 meters
     private static final double TICKS_PER_REV  = 1024.0;    // Redline encoder pulses per revolution
-    //
-    private static final double COLLECTOR_SPEED_ADDER = 2.0; // In m/s
     //
     private static final double TICKS_TO_MS = (1 / (TICKS_PER_REV * GEAR_RATIO)) * WHEEL_DIAMETER * Math.PI;
     private static final double MS_TO_TICKS = 1 / TICKS_TO_MS;  
@@ -47,14 +48,13 @@ public class collector {
      */
     public collector() {
         // Create pneumatic controller objects
-        robotCompressor    = new Compressor(config_hw.compressorCAN);
-        collectorSolenoid  = new DoubleSolenoid(config_hw.compressorCAN, config_hw.intakeSolPortA, config_hw.intakeSolPortB);
+        robotCompressor    = new Compressor(config_hw.compressorCAN, PneumaticsModuleType.CTREPCM);
+        collectorSolenoid  = new DoubleSolenoid(config_hw.compressorCAN,PneumaticsModuleType.CTREPCM , config_hw.intakeSolPortA, config_hw.intakeSolPortB);
 
         // ****************************************************************************
         // *** DANGER : Closed loop control must be enabled to prevent overpressure ***
         // ****************************************************************************
-        robotCompressor.setClosedLoopControl(true);             // Cycle to control pressure (important!)
-        robotCompressor.start();                                // Start compressor running
+        robotCompressor.enableDigital();                                // Start compressor running
         //robotCompressor.stop();                               // Uncomment this line to test without compressor
         collectorSolenoid.set(DoubleSolenoid.Value.kReverse);   // Move collector inboard
         collectorInboard = true;
@@ -74,6 +74,8 @@ public class collector {
         intakeSpin.config_kI(0, INTAKE_I);
         intakeSpin.config_kD(0, INTAKE_D);
         intakeSpin.config_kF(0, INTAKE_F);
+        SmartDashboard.putNumber("intakeP", INTAKE_P);
+        SmartDashboard.putNumber("intakeF", INTAKE_F);
         intakeSpin.configClosedloopRamp(1);
         //intakeSpin.set(ControlMode.Velocity, 0);
         intakeSpin.set(ControlMode.PercentOutput, 0);
@@ -85,6 +87,12 @@ public class collector {
      * @param driveTrainController Raise and lower collector.  Reverse mechanism to unjam
      */
     public void collectorPeriodic(driveTrain drive, XboxController driveTrainController) {
+
+        double p = SmartDashboard.getNumber("intakeP", 0.0);
+        double f = SmartDashboard.getNumber("intakeF", 0.0);
+        intakeSpin.config_kD(0, p);
+        intakeSpin.config_kF(0, f);
+
         double wheelSpeedMSActual;
         double intakeSpeedMSActual;
         double intakeSpeedMSSet;
@@ -95,10 +103,12 @@ public class collector {
         //
         wheelSpeedMSActual  = drive.getDriveSpeed();
         intakeSpeedMSActual = getIntakeSpeed();
-        intakeSpeedMSSet    = wheelSpeedMSActual + COLLECTOR_SPEED_ADDER;     // Run the intake slightly faster than the drive wheels.
+        intakeSpeedMSSet    = wheelSpeedMSActual + 1.0;     // Run the intake slightly faster than the drive wheels.
+//        intakeSpeedMSSet = driveTrainController.getRightTriggerAxis() * 20.0; // tmp
         SmartDashboard.putNumber("Wheel m/s",  wheelSpeedMSActual);
         SmartDashboard.putNumber("Intake m/s", intakeSpeedMSActual);
         SmartDashboard.putNumber("Intake Set m/s", intakeSpeedMSSet);
+
 
         //
         // Move the collector inboard or outboard

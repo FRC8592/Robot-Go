@@ -14,7 +14,6 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 
-
 public class shooter {
   //constants
   private static double TURRET_ERROR = 0.5;           // Allowed aiming error in degrees
@@ -150,58 +149,45 @@ public class shooter {
     // This prevents the turret from overshooting 0 and oscillating back and forth
     // KP is a scaling factor that we tested
     turretSpeed = xError * TURRET_ROTATE_KP;
-
-    if (Math.abs(xError) < LOCK_ERROR) {               // Turret is pointing at target (or no target)
-      targetLocked = targetValid;                     // We are only locked when targetValid
-    }
-    else{
-      targetLocked = false;
-    }
-
-    //post driver data to smart dashboard periodically
-    SmartDashboard.putNumber("LimelightX", xError);
-    SmartDashboard.putNumber("LimelightY", yError);
-    SmartDashboard.putNumber("LimelightArea", area);
-    SmartDashboard.putNumber("Target Range", targetRange);
-    SmartDashboard.putBoolean("Target Valid", targetValid);
-    SmartDashboard.putBoolean("Target Locked", targetLocked);
   }
 
-/**move turret to drive x to be less than "TURRET_ERROR"*/
-  public void moveTurret(){ 
-    //x = 0 when the camera sees the target is in the center
-    // Only allow the turret to track when commanded
-    if (Math.abs(xError) < TURRET_ERROR) {               // Turret is pointing at target (or no target)
-      turretRotate.set(ControlMode.PercentOutput, 0); // Stop motor
+    /* Move turret to drive x error to be less than TURRET_ERROR */
+    public void moveTurret() {
+        // x = 0 when the camera sees the target is in the center
+        // Only allow the turret to track when commanded
+        if (Math.abs(xError) < TURRET_ERROR) { // Turret is pointing at target (or no target)
+            turretRotate.set(ControlMode.PercentOutput, 0); // Stop motor
+        } else {
+            turretRotate.set(ControlMode.PercentOutput, turretSpeed);
+        }
     }
-    else {
-      turretRotate.set(ControlMode.PercentOutput, turretSpeed);
+
+
+    /**
+     * Turret can be controlled by autoaim and driver when target isn't locked can
+     * use manual aim
+     */
+    public void teleopmoveTurret(XboxController ballshootController) {
+        if (ballshootController.getBumper(GenericHID.Hand.kLeft)) {
+            this.moveTurret();
+        } else {
+            double turretRotation = ballshootController.getX(GenericHID.Hand.kLeft) * MANUAL_POWER; // manual turret
+                                                                                                    // movement
+            turretRotate.set(ControlMode.PercentOutput, turretRotation);
+
+        }
     }
-  }
-  /** turret can be controlled by autoaim and driver
-   * when target isn't locked can use manual aim*/
-  public void teleopmoveTurret(XboxController ballshootController){
-    if (ballshootController.getBumper(GenericHID.Hand.kLeft)){
-      this.moveTurret();
+
+
+    /**
+     * Publish turret rotation angle on Smart Dashboard
+     */
+    public void postTurretAngle() {
+        double turretAngle;
+
+        turretAngle = turretRotate.getSelectedSensorPosition() / TURRET_TICKS_PER_DEGREE;
+        SmartDashboard.putNumber("Turret Angle", turretAngle);
     }
-    else{
-      double turretRotation = ballshootController.getX(GenericHID.Hand.kLeft) * MANUAL_POWER; //manual turret movement
-      turretRotate.set(ControlMode.PercentOutput, turretRotation);
-
-    }
-    
-  }
-
-  /**
-   * Publish turret rotation angle on Smart Dashboard
-   */
-  public void postTurretAngle() {
-    double turretAngle;
-
-    turretAngle = turretRotate.getSelectedSensorPosition() / TURRET_TICKS_PER_DEGREE;
-    SmartDashboard.putNumber("Turret Angle", turretAngle);
-  }
-
 
   /**
    * Uses flywheel initial speed to bring it up to desired shooting speed
@@ -248,40 +234,43 @@ public class shooter {
     SmartDashboard.putBoolean("Flywheel Ready", flyWheelReady);
 
   }
-  /**Shoots ball if flywheel is ready */
-  public void shootBall(){
+
+    /**Shoots ball if flywheel is ready */
+    public void shootBall(){
     //Only allow the shooter to fire if the flywheel is ready
     // We could also add a check here for targetLocked and range to target (targetRange)
     //Turns on other motors needed to shoot the ball
-    if (flyWheelReady) {
-      collectorBelt.set(ControlMode.PercentOutput, 1);
-      triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);
+        if (flyWheelReady) {
+            collectorBelt.set(ControlMode.PercentOutput, 1);
+            triggerMotor.set(ControlMode.PercentOutput, TRIGGER_MOTOR_SPEED);
+        }
     }
-  }
-  /**Stops motors used to shoot ball*/
-  public void stopBall(){
-    collectorBelt.set(ControlMode.PercentOutput, 0);
-    triggerMotor.set(ControlMode.PercentOutput, 0);
-  } 
-  /**Reverses motors used to move ball to flywheel*/
-  public void unjamBall(){
-    collectorBelt.set(ControlMode.PercentOutput, -1);
-    triggerMotor.set(ControlMode.PercentOutput, -TRIGGER_MOTOR_SPEED);
-  }
-  /**
-   * Driver controlled shooting mechanisms
-   * unjam ball, shoot ball, stop ball
-   */
-  public void teleopBall(XboxController ballshootController){
-    if (ballshootController.getXButton()){
-      this.unjamBall();
-    }
-    else if (ballshootController.getTriggerAxis(GenericHID.Hand.kRight) == 1){
-      this.shootBall();
-    }
-    else {
-      this.stopBall();
-    } 
-  }
 
+
+    /** Stops motors used to shoot ball */
+    public void stopBall() {
+        collectorBelt.set(ControlMode.PercentOutput, 0);
+        triggerMotor.set(ControlMode.PercentOutput, 0);
+    }
+
+
+    /** Reverses motors used to move ball to flywheel */
+    public void unjamBall() {
+        collectorBelt.set(ControlMode.PercentOutput, -1);
+        triggerMotor.set(ControlMode.PercentOutput, -TRIGGER_MOTOR_SPEED);
+    }
+
+    
+    /**
+     * Driver controlled shooting mechanisms unjam ball, shoot ball, stop ball
+     */
+    public void teleopBall(XboxController ballshootController) {
+        if (ballshootController.getXButton()) {
+            this.unjamBall();
+        } else if (ballshootController.getTriggerAxis(GenericHID.Hand.kRight) == 1) {
+            this.shootBall();
+        } else {
+            this.stopBall();
+        }
+    }
 }

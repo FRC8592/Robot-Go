@@ -6,15 +6,14 @@ import edu.wpi.first.wpilibj.XboxController; //this puts in the xbox contoller s
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class driveTrain {
   // Constants
-  private static final double DRIVE_POWER = 0.5;    // Forward/reverse power scaling
-  private static final double TURN_POWER  = 0.6;    // Turning power scaling
+  private static final double DRIVE_POWER = 0.250;              // Forward/reverse power scaling
+  private static final double TURN_POWER  = 0.6;              // Turning power scaling
   private static final double TURN_IN_PLACE_POWER  = 0.45;    // Turning power scaling
   private static final double RAMP_TIME   = 0.25;             // Smooth application of motor power
   //
@@ -31,8 +30,8 @@ public class driveTrain {
   private WPI_TalonFX rearRight;
 
   // Motor groups
-	SpeedControllerGroup leftDrive;
-	SpeedControllerGroup rightDrive;
+	MotorControllerGroup leftDrive;
+	MotorControllerGroup rightDrive;
 	  
 	// Differential drive class
   DifferentialDrive robotDrive;
@@ -61,8 +60,8 @@ public class driveTrain {
 	  rearRight.configOpenloopRamp(RAMP_TIME);
 	
 		// Pair up motors into control groups
-		leftDrive  = new SpeedControllerGroup(frontLeft, rearLeft);
-		rightDrive = new SpeedControllerGroup(frontRight, rearRight);
+		leftDrive  = new MotorControllerGroup(frontLeft, rearLeft);
+		rightDrive = new MotorControllerGroup(frontRight, rearRight);
 		  
 		// Initialize drive system
   	robotDrive = new DifferentialDrive(rightDrive, leftDrive);
@@ -78,12 +77,12 @@ public class driveTrain {
     boolean curveOff;
 
     // Read gamepad controls
-    forward = driveTrainController.getTriggerAxis(GenericHID.Hand.kRight);  // Right trigger
-    reverse = driveTrainController.getTriggerAxis(GenericHID.Hand.kLeft);   // Left Trigger
-    turn    = driveTrainController.getX(GenericHID.Hand.kLeft);             // Left joystick
+    forward = driveTrainController.getRightTriggerAxis();  // Right trigger
+    reverse = driveTrainController.getLeftTriggerAxis();   // Left Trigger
+    turn    = driveTrainController.getLeftX();             // Left joystick
     //
     reverseControl = driveTrainController.getBButton();                      // B button
-    curveOff       = driveTrainController.getBumper(GenericHID.Hand.kRight); // Right bumper
+    curveOff       = driveTrainController.getRightBumper(); // Right bumper
   
     // Combine and scale inputs
     throttle = (-forward + reverse) * DRIVE_POWER;
