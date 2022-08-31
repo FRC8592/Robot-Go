@@ -69,37 +69,16 @@ public class driveTrain {
 
 /**Drives robot: forwards, backwards, turning*/
   public void driveTrainPeriodic(XboxController driveTrainController){
-    double  forward;
-    double  reverse;
     double  throttle;
     double  turn;
-    boolean reverseControl;
-    boolean curveOff;
 
-    // Read gamepad controls
-    forward = driveTrainController.getRightTriggerAxis();  // Right trigger
-    reverse = driveTrainController.getLeftTriggerAxis();   // Left Trigger
-    turn    = driveTrainController.getLeftX();             // Left joystick
-    //
-    reverseControl = driveTrainController.getBButton();                      // B button
-    curveOff       = driveTrainController.getRightBumper(); // Right bumper
-  
-    // Combine and scale inputs
-    throttle = (-forward + reverse) * DRIVE_POWER;
+    throttle = driveTrainController.getLeftX();
+    turn = driveTrainController.getLeftY();
+    throttle = Math.abs(throttle) * throttle;
+    turn = Math.abs(turn) * turn;
 
-    // Apply a different power curve for turn-in-place
-    if (!curveOff)
-      turn = turn * TURN_POWER;
-    else
-      turn = turn * TURN_IN_PLACE_POWER;
-
-    // If reverseControl is being pressed, invert all inputs so the robot can be driven backwards
-    if (reverseControl) {
-      throttle = -throttle;
-    }
-    
     // Send controls to the robot drive system
-    robotDrive.curvatureDrive(throttle, turn, curveOff);
+    robotDrive.curvatureDrive(throttle, turn, true);
   }
 
   public void autoDrive(){
