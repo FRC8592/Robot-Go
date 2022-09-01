@@ -74,8 +74,8 @@ public class driveTrain {
 
     throttle = driveTrainController.getLeftX();
     turn = driveTrainController.getLeftY();
-    throttle = Math.abs(throttle) * throttle;
-    turn = Math.abs(turn) * turn;
+    throttle = Math.abs(throttle) * throttle * DRIVE_POWER;
+    turn = Math.abs(turn) * turn * TURN_POWER;
 
     // Send controls to the robot drive system
     robotDrive.curvatureDrive(throttle, turn, true);
