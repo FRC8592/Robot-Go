@@ -12,8 +12,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class driveTrain {
   // Constants
-  private static final double DRIVE_POWER = 0.250;              // Forward/reverse power scaling
-  private static final double TURN_POWER  = 0.6;              // Turning power scaling
+  private static final double DRIVE_POWER = 0.5;              // Forward/reverse power scaling
+  private static final double TURN_POWER  = 0.5;            // Turning power scaling
   private static final double TURN_IN_PLACE_POWER  = 0.45;    // Turning power scaling
   private static final double RAMP_TIME   = 0.25;             // Smooth application of motor power
   //
@@ -78,15 +78,18 @@ public class driveTrain {
     turn = Math.abs(turn) * turn * TURN_POWER;
 
     // Send controls to the robot drive system
-    robotDrive.curvatureDrive(throttle, turn, true);
+    //robotDrive.curvatureDrive(throttle, turn, true);
+    robotDrive.arcadeDrive(throttle, turn, true);
   }
 
   public void autoDrive(){
-    robotDrive.curvatureDrive(0.3, 0, false);
+    //robotDrive.curvatureDrive(0.3, 0, false);\
+    robotDrive.arcadeDrive(0.3, 0, false);
   }
 
   public void driveStop(){
-    robotDrive.curvatureDrive(0, 0, false);
+    //robotDrive.curvatureDrive(0, 0, false);
+    robotDrive.arcadeDrive(0, 0, false);
   }
 
   /**
