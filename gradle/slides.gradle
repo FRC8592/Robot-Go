@@ -1,0 +1,38 @@
+// Builds README.md into a reveal.js slide deck with pandoc.
+//
+// Kept out of build.gradle on purpose: GradleRIO version upgrades rewrite
+// build.gradle wholesale, and we don't want that to clobber these tasks.
+//
+// Usage:
+//   ./gradlew slides           -> build/slides/slides.html
+//   ./gradlew portableSlides   -> build/slides/robot-go-slides.html (offline-ready)
+//
+// If pandoc isn't on the Gradle daemon's PATH:
+//   ./gradlew -Ppandoc=/path/to/pandoc slides
+
+def pandocExe   = project.findProperty('pandoc') ?: 'pandoc'
+def slidesDir   = file("$buildDir/slides")
+def commonFlags = ['-t', 'revealjs', '-s', '--slide-level=2',
+                   '--highlight-style=breezedark']
+
+tasks.register('slides', Exec) {
+    group       = 'documentation'
+    description = 'Build README.md into a reveal.js deck'
+    inputs.file  file('README.md')
+    outputs.file file("$slidesDir/slides.html")
+    doFirst { slidesDir.mkdirs() }
+    commandLine([pandocExe, 'README.md'] + commonFlags +
+                ['-o', "$slidesDir/slides.html"])
+}
+
+tasks.register('portableSlides', Exec) {
+    group       = 'documentation'
+    description = 'Single self-contained deck for presenting without wifi'
+    inputs.file  file('README.md')
+    outputs.file file("$slidesDir/robot-go-slides.html")
+    doFirst { slidesDir.mkdirs() }
+    // pandoc 2.18 spells this --self-contained; pandoc 3.1+ renamed it to
+    // --embed-resources --standalone. Build while online, present offline.
+    commandLine([pandocExe, 'README.md'] + commonFlags +
+                ['--self-contained', '-o', "$slidesDir/robot-go-slides.html"])
+}
