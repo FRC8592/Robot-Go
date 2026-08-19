@@ -3,7 +3,7 @@ title: "Robot Go"
 subtitle: "How to Make a Robot Go — FRC BIOCORE"
 author: "FRC 8592"
 date: "Preseason 2026 → 2027 Season"
-theme: daytime
+theme: day
 highlightjs: true
 slideNumber: true
 hash: true
