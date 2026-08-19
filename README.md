@@ -347,7 +347,7 @@ A **merge conflict** is git saying "I don't know which one you want."
 Add yourself in your first PR:
 
 - Brad Sneade — mentor
-- *your name here*
+- Naaisha Mahajan
 
 ---
 
