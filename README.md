@@ -348,6 +348,7 @@ Add yourself in your first PR:
 
 - Brad Sneade — mentor
 - Carter Ngo
+- Rohan Agarwal
 
 ---
 
