@@ -290,13 +290,13 @@ You will review as much code as you write. It's not optional and it's not rude.
 ## Java naming conventions
 
 ```java
-public class IntakeSubsystem {          // PascalCase for classes
-    private final SparkMax motorSparkMax;    // camelCase for member fields
-    public static final int CAN_ID = 5; // SCREAMING_SNAKE_CASE for constants
-    private double targetSpeed;       // camelCase for variables
+public class IntakeSubsystem {                    // PascalCase for classes
+    public static final int CAN_ID = 5;           // SCREAMING_SNAKE_CASE for constants
+    private final SparkMax motor;                 // camelCase for member fields
+    private double targetSpeed;                   // camelCase for member state too
 
-    public void setSpeed(double speed) {  // camelCase for methods
-        targetSpeed = speed;
+    public void setSpeed(double speed) {          // camelCase for methods
+        targetSpeed = speed;                      // camelCase for locals and parameters
     }
 }
 ```
@@ -307,9 +307,12 @@ public class IntakeSubsystem {          // PascalCase for classes
 :::
 
 ::: incremental
-WPILib conventions
-- `m_` = "this belongs to the object" — you can tell at a glance
-- `k` = "this never changes" — from the WPILib convention
+You will see two other prefixes in WPILib's own code and in older examples
+- `m_` on a member field — `m_motor` instead of `motor`
+- `k` on a constant — `kCanId` instead of `CAN_ID`
+- **Recognize them; don't write them.** We follow standard Java naming.
+- Vendor names like `MotorType.kBrushless` keep their `k` — that's their API,
+  not ours to rename.
 :::
 
 ## When two people edit the same line
@@ -355,6 +358,280 @@ Add yourself in your first PR:
 - Abhay Acharya
 
 ---
+
+# Robot Go 2
+Motors & Logging
+
+## From code to spinning shaft
+
+```
+Your code  ──>  roboRIO  ──CAN──>  Motor Controller  ──>  Motor
+                                          ↑
+                                    PDP breaker
+                                    (the actual power)
+```
+
+::: incremental
+- Your code sends a **number between -1.0 and 1.0**
+- The controller turns that into voltage
+- Every controller has a unique **CAN ID** — set it once, write it down
+:::
+
+## Brushed vs brushless
+
+|  | Brushed (CIM, 775) | Brushless (NEO, Kraken, Falcon) |
+|---|---|---|
+| Power | Less | More |
+| Efficiency | Lower | Higher |
+| Built-in encoder | No | **Yes** |
+| Cost | Cheaper | Pricier |
+| Wears out | Brushes wear | Basically doesn't |
+
+**Brushless motors know where they are.** That matters enormously in Session 4.
+
+## Brake vs coast, and current limits
+
+```java
+SparkMax motor = new SparkMax(Constants.INTAKE_CAN_ID, MotorType.kBrushless);
+
+SparkMaxConfig config = new SparkMaxConfig();
+config.smartCurrentLimit(40)      // amps — protects motor AND battery
+      .idleMode(IdleMode.kBrake); // stop dead vs. spin down freely
+
+motor.configure(config,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+```
+
+::: incremental
+- **Brake** — holds position when you stop. Arms, elevators.
+- **Coast** — spins down freely. Drivetrains (usually), flywheels.
+- **Current limit** — the difference between a stalled motor and a *burnt* motor.
+:::
+
+## Making it move
+
+```java
+public class IntakeSubsystem extends SubsystemBase {
+    private final SparkMax motor =
+        new SparkMax(Constants.INTAKE_CAN_ID, MotorType.kBrushless);
+
+    public void setSpeed(double speed) {
+        motor.set(speed);   // -1.0 .. 1.0
+    }
+
+    public void stop() {
+        motor.set(0.0);
+    }
+}
+```
+
+Bind it to a button in `RobotContainer`:
+
+```java
+private final CommandXboxController driver = new CommandXboxController(0);
+
+driver.a().whileTrue(
+    Commands.startEnd(() -> intake.setSpeed(0.6),
+                      () -> intake.stop(),
+                      intake));
+```
+
+## 🟩 What this looks like in 2027
+
+:::: {.columns}
+::: {.column width="50%"}
+**🟦 2026**
+
+```java
+motor.set(0.6);
+motor.stopMotor();
+```
+:::
+::: {.column width="50%"}
+**🟩 2027**
+
+```java
+motor.setThrottle(0.6);
+motor.disable();
+```
+:::
+::::
+
+`set()` was ambiguous — set *what*? Throttle? Position? Velocity?
+`setThrottle()` says what it means.
+
+
+## Logging: how you find out what happened
+
+**You cannot debug a robot by watching it.** It moves too fast and it
+doesn't tell you why.
+
+```java
+public class Robot extends TimedRobot {
+    public Robot() {
+        DataLogManager.start();                          // log to a file
+        DriverStation.startDataLog(DataLogManager.getLog());
+    }
+}
+```
+
+::: incremental
+- **NetworkTables (NT4)** — live values, robot → dashboard
+- **DataLogManager** — writes a file you can scrub through *after* the match
+- Log it now; you cannot go back and log a match that already happened.
+:::
+
+## Publishing a value
+
+```java
+public class IntakeSubsystem extends SubsystemBase {
+    private final DoublePublisher velocityPublisher =
+        NetworkTableInstance.getDefault()
+            .getTable("Intake")
+            .getDoubleTopic("Velocity")
+            .publish();
+
+    @Override
+    public void periodic() {
+        velocityPublisher.set(motor.getEncoder().getVelocity());
+    }
+}
+```
+
+Publish once, set it every loop. Now it's on the dashboard *and* in the log file.
+
+
+
+## The two tools you'll actually use
+
+**Elastic** — the *driver's* dashboard.
+Big readable widgets, match-time information, autonomous chooser.
+
+**AdvantageScope** — the *programmer's* tool.
+Scrub through a log file, graph any value against any other, replay the match.
+
+. . .
+
+**SmartDashboard and Shuffleboard are removed in 2027.**
+
+You'll see them in old code and tutorials. Recognize them — don't build on them.
+
+
+## Reading the Driver Station log
+
+When something breaks, the answer is usually already written down.
+
+::: incremental
+- **Orange** = warning. Often "loop time overrun" — your code is too slow.
+- **Red** = exception. Read the **first** line and the **first** `frc.robot`
+  line in the stack trace. That's your bug.
+- **"Watchdog not fed"** = a loop took longer than 20ms.
+- Brownout warnings = electrical, not code. Usually.
+:::
+
+## Hands-on: motor + telemetry
+
+::: incremental
+1. Create `IntakeSubsystem` with one motor
+2. Set a **current limit** and an idle mode
+3. Bind it to the A button with `whileTrue`
+4. Publish motor velocity and applied output to NetworkTables
+5. Watch it in AdvantageScope while you run it
+6. **PR it.** Include what you saw on the graph.
+:::
+
+# Workshop
+Motor Helpers & Cleanup {#cleanup-workshop}
+
+## Why we keep doing this
+
+Three times this preseason we stop adding features and clean up instead.
+
+::: incremental
+- Real teams spend more time reading code than writing it
+- The code you write in October is the code you debug in March
+- Refactoring is a *skill*, and it needs reps
+:::
+
+## Code smell #1: magic numbers
+
+```java
+// Before — what is 0.6? Why 40? What's 5?
+SparkMax motor = new SparkMax(5, MotorType.kBrushless);
+config.smartCurrentLimit(40);
+motor.set(0.6);
+```
+
+```java
+// After — Constants.java
+public static final class IntakeConstants {
+    public static final int    CAN_ID        = 5;
+    public static final int    CURRENT_LIMIT = 40;
+    public static final double INTAKE_SPEED  = 0.6;
+}
+```
+
+**A number in the middle of your code is a number nobody can change safely.**
+
+::: notes
+The tuning argument sells this better than the readability argument: when all
+the numbers live in one file, you can tune a mechanism without hunting through
+five classes, and the diff of what you tuned is one readable file.
+:::
+
+## Code smell #2: copy-pasted configuration
+
+Four motors, four identical twelve-line config blocks.
+
+. . .
+
+Now change the current limit on all four. Miss one. Debug it for an hour.
+
+```java
+public final class MotorHelper {
+    public static SparkMax createSparkMax(int canId, int currentLimit,
+                                          IdleMode idleMode, boolean inverted) {
+        SparkMax motor = new SparkMax(canId, MotorType.kBrushless);
+        SparkMaxConfig config = new SparkMaxConfig();
+        config.smartCurrentLimit(currentLimit)
+              .idleMode(idleMode)
+              .inverted(inverted);
+        motor.configure(config, ResetMode.kResetSafeParameters,
+                        PersistMode.kPersistParameters);
+        return motor;
+    }
+}
+```
+
+## Now it's one line
+
+```java
+private final SparkMax motor = MotorHelper.createSparkMax(
+    IntakeConstants.CAN_ID,
+    IntakeConstants.CURRENT_LIMIT,
+    IdleMode.kBrake,
+    false);
+```
+
+::: incremental
+- Every motor configured the same way, guaranteed
+- Change the pattern once, it changes everywhere
+- The subsystem now reads like *what it does*, not *how it's wired*
+  :::
+
+## The cleanup checklist
+
+::: incremental
+- [ ] Any number that isn't 0 or 1 lives in `Constants.java`
+- [ ] No block of code appears twice
+- [ ] Every class and method name says what it does
+- [ ] Dead code and commented-out code is **deleted** (git remembers it)
+- [ ] Every public method has a one-line comment saying why it exists
+- [ ] It still builds and still runs on the robot
+- [ ] **PR it** — cleanup PRs get reviewed like any other
+:::
+
 
 ## Building this deck
 
