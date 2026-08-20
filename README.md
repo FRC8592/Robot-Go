@@ -352,6 +352,7 @@ Add yourself in your first PR:
 - xing
 - Naaisha Mahajan
 - Abhay Acharya
+- Dylan Sneade - student
 
 ---
 
