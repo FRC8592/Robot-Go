@@ -350,6 +350,7 @@ Add yourself in your first PR:
 - Carter Ngo
 - Rohan Agarwal
 - xing
+- Naaisha Mahajan
 
 ---
 
