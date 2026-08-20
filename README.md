@@ -351,8 +351,8 @@ Add yourself in your first PR:
 - Rohan Agarwal
 - xing
 - Naaisha Mahajan
-- Abhay Acharya
 - Dylan Sneade - student
+
 
 ---
 
