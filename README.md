@@ -3,7 +3,7 @@ title: "Robot Go"
 subtitle: "How to Make a Robot Go — FRC BIOCORE"
 author: "FRC 8592"
 date: "Preseason 2026 → 2027 Season"
-theme: evening
+theme: night
 highlightjs: true
 slideNumber: true
 hash: true
@@ -313,6 +313,8 @@ You will see two other prefixes in WPILib's own code and in older examples
 - **Recognize them; don't write them.** We follow standard Java naming.
 - Vendor names like `MotorType.kBrushless` keep their `k` — that's their API,
   not ours to rename.
+- PID gains show up as `kP`/`kI`/`kD` in every WPILib doc and tutorial —
+  we write `P_GAIN`/`I_GAIN`/`D_GAIN`. Same idea, our spelling.
 :::
 
 ## When two people edit the same line
@@ -348,14 +350,8 @@ A **merge conflict** is git saying "I don't know which one you want."
 **Everyone leaves today with a merged PR.**
 
 Add yourself in your first PR:
-
 - Brad Sneade — mentor
-- Carter Ngo
-- Rohan Agarwal
-- xing
-- Naaisha Mahajan
-- Dylan Sneade - student
-- Abhay Acharya
+- *Your name here*
 
 ---
 
@@ -607,6 +603,7 @@ public final class MotorHelper {
 ## Now it's one line
 
 ```java
+
 private final SparkMax motor = MotorHelper.createSparkMax(
     IntakeConstants.CAN_ID,
     IntakeConstants.CURRENT_LIMIT,
@@ -618,7 +615,7 @@ private final SparkMax motor = MotorHelper.createSparkMax(
 - Every motor configured the same way, guaranteed
 - Change the pattern once, it changes everywhere
 - The subsystem now reads like *what it does*, not *how it's wired*
-  :::
+:::
 
 ## The cleanup checklist
 
@@ -630,6 +627,170 @@ private final SparkMax motor = MotorHelper.createSparkMax(
 - [ ] Every public method has a one-line comment saying why it exists
 - [ ] It still builds and still runs on the robot
 - [ ] **PR it** — cleanup PRs get reviewed like any other
+:::
+
+# Robot Go 3
+Commands `[CMD]`
+
+## The mental model
+
+::: incremental
+- A **Subsystem** is a *thing* — the intake, the arm, the drivetrain.
+  It owns hardware.
+- A **Command** is a *request* — "run the intake", "raise the arm to 40°".
+- The **Scheduler** decides who gets what, and stops two commands from
+  fighting over the same motor.
+:::
+
+. . .
+
+**One subsystem, one owner at a time.** That rule is the whole framework.
+
+## A command's life
+
+```java
+public class IntakeCommand extends Command {
+    private final IntakeSubsystem intake;
+
+    public IntakeCommand(IntakeSubsystem intake) {
+        this.intake = intake;
+        addRequirements(intake);   // "I need this subsystem"
+    }
+
+    @Override public void initialize() { intake.setSpeed(0.6); }  // once, at start
+    @Override public void execute()    { }                        // every 20ms
+    @Override public boolean isFinished() { return intake.hasGamePiece(); }
+    @Override public void end(boolean interrupted) { intake.stop(); }
+}
+```
+
+## Requirements are the safety net
+
+```java
+addRequirements(intake);
+```
+
+::: incremental
+- Two commands both need the intake?
+- The **new one wins**; the old one gets `end(interrupted = true)`.
+- Your motor never gets two conflicting commands in the same loop.
+- **This is why you declare requirements.** Skip it and you get chaos.
+:::
+
+## Default commands
+
+What should a subsystem do when nobody's asking for anything?
+
+```java
+drivetrain.setDefaultCommand(
+    Commands.run(() -> drivetrain.arcadeDrive(
+                          -driver.getLeftY(),
+                          -driver.getRightX()),
+                 drivetrain));
+```
+
+The drivetrain drives from the sticks unless something else takes over.
+
+## Composing commands
+
+```java
+// One after another
+intakeCommand.andThen(indexCommand);
+
+// At the same time
+shooterSpinUp.alongWith(armRaise);
+
+// Whichever finishes first wins
+intakeCommand.withTimeout(3.0);
+
+// A whole sequence
+Commands.sequence(
+    arm.goToAngle(45),
+    intake.runUntilPiece(),
+    arm.goToAngle(0));
+```
+
+**Small commands compose into big behavior.** That's the payoff.
+
+
+## Binding to the controller
+
+```java
+private final CommandXboxController driver = new CommandXboxController(0);
+
+private void configureBindings() {
+    driver.a().onTrue(new IntakeCommand(intake));    // on press
+    driver.b().whileTrue(shooter.spinUpCommand());   // while held
+    driver.x().toggleOnTrue(arm.raiseCommand());     // press on/press off
+}
+```
+
+| Binding | Fires |
+|---|---|
+| `onTrue` | Once, when pressed |
+| `whileTrue` | Runs while held, cancels on release |
+| `toggleOnTrue` | Press to start, press again to stop |
+
+::: notes
+Choosing the wrong binding type is a very common bug and it looks like a code
+bug rather than a binding bug. If a mechanism "won't stop", check whether they
+used onTrue where they wanted whileTrue.
+:::
+
+## 🟩 Commands in 2027
+
+Setup has already moved from `robotInit()` into the constructor — **our repo
+is on the right side of this today.** 2027 deletes `robotInit()` entirely.
+
+:::: {.columns}
+::: {.column width="50%"}
+**Old code you'll still find**
+
+```java
+public class Robot extends TimedRobot {
+  @Override
+  public void robotInit() {
+    container =
+      new RobotContainer();
+  }
+}
+```
+:::
+::: {.column width="50%"}
+**🟦 2026 and 🟩 2027**
+
+```java
+public class Robot extends TimedRobot {
+  public Robot() {
+    container =
+      new RobotContainer();
+  }
+}
+```
+:::
+::::
+
+**Commands v3** is also coming: commands written as straight-line code that
+pauses and resumes, instead of split across `initialize`/`execute`/`isFinished`.
+
+*Concept only — the API is still alpha.*
+
+::: notes
+Commands v3 leans on Java 21+ virtual threads, which the roboRIO's JVM couldn't
+do — that's why it's arriving with SystemCore rather than earlier. Everything
+in this session still applies; v3 changes how you write the body, not what a
+command or a requirement means.
+:::
+
+## Hands-on: write a real command
+
+::: incremental
+1. Write `IntakeCommand` — runs the intake until a sensor sees a game piece
+2. `addRequirements()` — and understand why
+3. Give it a **timeout** so a broken sensor can't hold the subsystem forever
+4. Bind it to a button
+5. Add a default command to your subsystem
+6. **PR it**
 :::
 
 

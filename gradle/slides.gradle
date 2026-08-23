@@ -7,22 +7,93 @@
 //   ./gradlew slides           -> build/slides/slides.html
 //   ./gradlew portableSlides   -> build/slides/robot-go-slides.html (offline-ready)
 //
-// If pandoc isn't on the Gradle daemon's PATH:
+// To force a specific binary:
 //   ./gradlew -Ppandoc=/path/to/pandoc slides
 
-def pandocExe   = project.findProperty('pandoc') ?: 'pandoc'
 def slidesDir   = file("$buildDir/slides")
 def commonFlags = ['-t', 'revealjs', '-s', '--slide-level=2',
                    '--highlight-style=breezedark']
 
+def isWindows = System.getProperty('os.name').toLowerCase().contains('windows')
+
+// Locate pandoc ourselves instead of letting Exec resolve a bare 'pandoc'
+// against PATH.
+//
+// Exec inherits the *Gradle daemon's* environment, not the environment of the
+// shell that ran ./gradlew. A daemon started by the IDE (or cron, or any shell
+// that skipped the user's profile) has a trimmed PATH, so conda/homebrew
+// installs are invisible to it and the task dies with the unhelpful
+// "A problem occurred starting process 'command 'pandoc''". Searching the
+// well-known install dirs ourselves makes the build immune to whoever happened
+// to start the daemon.
+ext.resolvePandoc = {
+    def exeName = isWindows ? 'pandoc.exe' : 'pandoc'
+    def home    = System.getProperty('user.home')
+
+    // An explicit -Ppandoc is validated rather than passed straight through, so
+    // a typo'd path reports itself instead of surfacing as Exec's opaque
+    // "A problem occurred starting process".
+    def override = project.findProperty('pandoc')
+    if (override) {
+        def f = new File(override.toString())
+        if (f.isFile() && (isWindows || f.canExecute())) return f.absolutePath
+        throw new GradleException(
+            "-Ppandoc=${override} is not an executable file.")
+    }
+
+    def dirs = []
+    dirs.addAll((System.getenv('PATH') ?: '').split(File.pathSeparator).toList())
+    ['mambaforge/bin', 'miniforge3/bin', 'anaconda3/bin', 'miniconda3/bin',
+     '.local/bin', 'bin', 'AppData/Local/Pandoc'].each { dirs << "$home/$it" }
+    dirs.addAll(['/usr/local/bin', '/usr/bin', '/opt/homebrew/bin',
+                 'C:/Program Files/Pandoc'])
+
+    for (d in dirs) {
+        if (!d) continue
+        def f = new File(d.toString(), exeName)
+        if (f.isFile() && (isWindows || f.canExecute())) return f.absolutePath
+    }
+
+    throw new GradleException("""\
+pandoc was not found. Install it with one of:
+    conda install pandoc
+    sudo apt install pandoc
+    brew install pandoc
+    https://pandoc.org/installing.html
+Or point the build straight at it:
+    ./gradlew -Ppandoc=/full/path/to/pandoc slides""")
+}
+
+// Major version of the resolved pandoc, used to pick between flag spellings.
+// Plain ProcessBuilder rather than project.exec {}, which is deprecated for
+// removal and doesn't play well with the configuration cache.
+ext.pandocMajor = { String exe ->
+    try {
+        def proc = new ProcessBuilder(exe, '--version')
+                       .redirectErrorStream(true).start()
+        def out = proc.inputStream.text
+        proc.waitFor()
+        def m = out =~ /pandoc(?:\.exe)?\s+(\d+)\./
+        return m ? (m[0][1] as int) : 2
+    } catch (Exception ignored) {
+        return 2
+    }
+}
+
+// commandLine is set in doFirst, not at configuration time: resolving pandoc
+// while configuring would break *every* invocation on a machine without it,
+// including build and deploy. Exec only validates the executable when its main
+// action runs, which is after doFirst.
 tasks.register('slides', Exec) {
     group       = 'documentation'
     description = 'Build README.md into a reveal.js deck'
     inputs.file  file('README.md')
     outputs.file file("$slidesDir/slides.html")
-    doFirst { slidesDir.mkdirs() }
-    commandLine([pandocExe, 'README.md'] + commonFlags +
-                ['-o', "$slidesDir/slides.html"])
+    doFirst {
+        slidesDir.mkdirs()
+        commandLine([resolvePandoc(), 'README.md'] + commonFlags +
+                    ['-o', "$slidesDir/slides.html"])
+    }
 }
 
 tasks.register('portableSlides', Exec) {
@@ -30,9 +101,14 @@ tasks.register('portableSlides', Exec) {
     description = 'Single self-contained deck for presenting without wifi'
     inputs.file  file('README.md')
     outputs.file file("$slidesDir/robot-go-slides.html")
-    doFirst { slidesDir.mkdirs() }
-    // pandoc 2.18 spells this --self-contained; pandoc 3.1+ renamed it to
-    // --embed-resources --standalone. Build while online, present offline.
-    commandLine([pandocExe, 'README.md'] + commonFlags +
-                ['--self-contained', '-o', "$slidesDir/robot-go-slides.html"])
+    doFirst {
+        slidesDir.mkdirs()
+        def exe = resolvePandoc()
+        // pandoc 2.x spells this --self-contained; 3.x renamed it to
+        // --embed-resources --standalone. Build while online, present offline.
+        def embed = pandocMajor(exe) >= 3 ? ['--embed-resources', '--standalone']
+                                          : ['--self-contained']
+        commandLine([exe, 'README.md'] + commonFlags + embed +
+                    ['-o', "$slidesDir/robot-go-slides.html"])
+    }
 }
