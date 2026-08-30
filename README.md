@@ -1,6 +1,6 @@
 ---
 title: "Robot Go"
-subtitle: "How to Make a Robot Go — FRC BIOCORE"
+subtitle: "How to Make a Robot Go - FRC BIOCORE"
 author: "FRC 8592"
 date: "Preseason 2026 → 2027 Season"
 theme: night
@@ -56,14 +56,14 @@ That's the job, and that's what the practice robot is for.
 | ↻ | *Workshop: Cleanup #2*                           |
 | 5 | Architecture: Command vs State Machine vs Hybrid |
 | ↻ | *Workshop: Cleanup #3*                           |
-| — | **Buffer meeting** - catch up, ask anything      |
+| - | **Buffer meeting** - catch up, ask anything      |
 
 ## Two symbols you'll see everywhere
 
-**🟦 roboRIO** — the control system we're using *right now*, WPILib 2026.
+**🟦 roboRIO** - the control system we're using *right now*, WPILib 2026.
 Everything you type and deploy this preseason is this.
 
-**🟩 SystemCore** — the new control system for the **2027 season**.
+**🟩 SystemCore** - the new control system for the **2027 season**.
 Marked slides tell you what changes and why.
 
 ## Ground rules for the shop
@@ -81,7 +81,7 @@ Marked slides tell you what changes and why.
 3. **Build a drivetrain program** -
    [docs.wpilib.org · Test drivetrain program](https://docs.wpilib.org/en/stable/docs/zero-to-robot/step-4/creating-test-drivetrain-program-cpp-java-python.html)
 
-Then clone this repo:
+Then clone this repo:sudo sed -i 's|signed-by=/etc/apt/trusted.gpg.d/google-chrome.gpg|signed-by=/usr/share/keyrings/google-chrome.gpg|' /etc/apt/sources.list.d/google-chrome-official.list && sudo apt update
 
 ```bash
 git clone git@github.com:FRC8592/Robot-Go.git
@@ -118,15 +118,15 @@ TODO - test this on the DIY robots
 - **CAN bus** - one daisy-chained wire pair that talks to every motor controller.
 - **Radio** - how the Driver Station reaches the robot.
 
-## 🟩 SystemCore — new for 2027
+## 🟩 SystemCore - new for 2027
 
 The biggest control system change since the cRIO.
 
 ::: incremental
-- **Multiple CAN buses** — no more one-bus bottleneck
-- **Smart IO** — smarter, simpler sensor ports
-- **Onboard IMU** — a gyro is built in, no separate board
-- **Expansion Hub** — shared hardware with FTC
+- **Multiple CAN buses** - no more one-bus bottleneck
+- **Smart IO** - smarter, simpler sensor ports
+- **Onboard IMU** - a gyro is built in, no separate board
+- **Expansion Hub** - shared hardware with FTC
 - Cheaper than the roboRIO
 :::
 
@@ -135,7 +135,7 @@ The biggest control system change since the cRIO.
 | Gone | Use instead |
 |---|---|
 | Relays | A motor controller, or Smart IO |
-| Analog output | — (rarely used) |
+| Analog output | - (rarely used) |
 | SPI devices | CAN or Smart IO sensors |
 | Servos | CAN-based actuators |
 | Ultrasonics, counters | Smart IO / CAN sensors |
@@ -173,16 +173,16 @@ Learn the *shape* of the change, not the spelling.
 ## 🟩 Also new for 2027
 
 ::: incremental
-- **A new Driver Station** — shared between FRC and FTC, no longer LabVIEW
-- **Java 25 / C++23** — much newer language features available
-- `robotInit()` is deleted — the `Robot()` constructor, which 2026 already uses
+- **A new Driver Station** - shared between FRC and FTC, no longer LabVIEW
+- **Java 25 / C++23** - much newer language features available
+- `robotInit()` is deleted - the `Robot()` constructor, which 2026 already uses
 - `MotorController.set()` → `setThrottle()`, `stopMotor()` → `disable()`
 - All the gamepad classes collapse into one `Gamepad`
-- **Commands v3** — a new command framework built on coroutines
+- **Commands v3** - a new command framework built on coroutines
 :::
 
 ::: notes
-Commands v3 is genuinely interesting — it uses Java 21+ virtual threads so a
+Commands v3 is genuinely interesting - it uses Java 21+ virtual threads so a
 command can be written as straight-line imperative code that pauses and
 resumes, instead of being split across initialize/execute/isFinished. It could
 not be built for the roboRIO because the JVM there didn't support it. Don't go
@@ -296,7 +296,8 @@ public class IntakeSubsystem {                    // PascalCase for classes
     private double targetSpeed;                   // camelCase for member state too
 
     public void setSpeed(double speed) {          // camelCase for methods
-        targetSpeed = speed;                      // camelCase for locals and parameters
+        targetSpeed = speed;            
+          // camelCase for locals and parameters
     }
 }
 ```
@@ -308,12 +309,12 @@ public class IntakeSubsystem {                    // PascalCase for classes
 
 ::: incremental
 You will see two other prefixes in WPILib's own code and in older examples
-- `m_` on a member field — `m_motor` instead of `motor`
-- `k` on a constant — `kCanId` instead of `CAN_ID`
+- `m_` on a member field - `m_motor` instead of `motor`
+- `k` on a constant - `kCanId` instead of `CAN_ID`
 - **Recognize them; don't write them.** We follow standard Java naming.
-- Vendor names like `MotorType.kBrushless` keep their `k` — that's their API,
+- Vendor names like `MotorType.kBrushless` keep their `k` - that's their API,
   not ours to rename.
-- PID gains show up as `kP`/`kI`/`kD` in every WPILib doc and tutorial —
+- PID gains show up as `kP`/`kI`/`kD` in every WPILib doc and tutorial -
   we write `P_GAIN`/`I_GAIN`/`D_GAIN`. Same idea, our spelling.
 :::
 
@@ -343,14 +344,14 @@ A **merge conflict** is git saying "I don't know which one you want."
 1. Branch: `yourname/add-me-to-readme`
 2. Add your name to the roster at the bottom of this README
 3. Commit, push, open a PR
-4. **Review someone else's PR** — leave one real comment
+4. **Review someone else's PR** - leave one real comment
 5. Get yours reviewed, then merge it
 :::
 
 **Everyone leaves today with a merged PR.**
 
 Add yourself in your first PR:
-- Brad Sneade — mentor
+- Brad Sneade - mentor
 - *Your name here*
 
 ---
@@ -370,7 +371,7 @@ Your code  ──>  roboRIO  ──CAN──>  Motor Controller  ──>  Motor
 ::: incremental
 - Your code sends a **number between -1.0 and 1.0**
 - The controller turns that into voltage
-- Every controller has a unique **CAN ID** — set it once, write it down
+- Every controller has a unique **CAN ID** - set it once, write it down
 :::
 
 ## Brushed vs brushless
@@ -391,7 +392,7 @@ Your code  ──>  roboRIO  ──CAN──>  Motor Controller  ──>  Motor
 SparkMax motor = new SparkMax(Constants.INTAKE_CAN_ID, MotorType.kBrushless);
 
 SparkMaxConfig config = new SparkMaxConfig();
-config.smartCurrentLimit(40)      // amps — protects motor AND battery
+config.smartCurrentLimit(40)      // amps - protects motor AND battery
       .idleMode(IdleMode.kBrake); // stop dead vs. spin down freely
 
 motor.configure(config,
@@ -400,9 +401,9 @@ motor.configure(config,
 ```
 
 ::: incremental
-- **Brake** — holds position when you stop. Arms, elevators.
-- **Coast** — spins down freely. Drivetrains (usually), flywheels.
-- **Current limit** — the difference between a stalled motor and a *burnt* motor.
+- **Brake** - holds position when you stop. Arms, elevators.
+- **Coast** - spins down freely. Drivetrains (usually), flywheels.
+- **Current limit** - the difference between a stalled motor and a *burnt* motor.
 :::
 
 ## Making it move
@@ -454,7 +455,7 @@ motor.disable();
 :::
 ::::
 
-`set()` was ambiguous — set *what*? Throttle? Position? Velocity?
+`set()` was ambiguous - set *what*? Throttle? Position? Velocity?
 `setThrottle()` says what it means.
 
 
@@ -473,8 +474,8 @@ public class Robot extends TimedRobot {
 ```
 
 ::: incremental
-- **NetworkTables (NT4)** — live values, robot → dashboard
-- **DataLogManager** — writes a file you can scrub through *after* the match
+- **NetworkTables (NT4)** - live values, robot → dashboard
+- **DataLogManager** - writes a file you can scrub through *after* the match
 - Log it now; you cannot go back and log a match that already happened.
 :::
 
@@ -501,17 +502,17 @@ Publish once, set it every loop. Now it's on the dashboard *and* in the log file
 
 ## The two tools you'll actually use
 
-**Elastic** — the *driver's* dashboard.
+**Elastic** - the *driver's* dashboard.
 Big readable widgets, match-time information, autonomous chooser.
 
-**AdvantageScope** — the *programmer's* tool.
+**AdvantageScope** - the *programmer's* tool.
 Scrub through a log file, graph any value against any other, replay the match.
 
 . . .
 
 **SmartDashboard and Shuffleboard are removed in 2027.**
 
-You'll see them in old code and tutorials. Recognize them — don't build on them.
+You'll see them in old code and tutorials. Recognize them - don't build on them.
 
 
 ## Reading the Driver Station log
@@ -519,7 +520,7 @@ You'll see them in old code and tutorials. Recognize them — don't build on the
 When something breaks, the answer is usually already written down.
 
 ::: incremental
-- **Orange** = warning. Often "loop time overrun" — your code is too slow.
+- **Orange** = warning. Often "loop time overrun" - your code is too slow.
 - **Red** = exception. Read the **first** line and the **first** `frc.robot`
   line in the stack trace. That's your bug.
 - **"Watchdog not fed"** = a loop took longer than 20ms.
@@ -553,14 +554,14 @@ Three times this preseason we stop adding features and clean up instead.
 ## Code smell #1: magic numbers
 
 ```java
-// Before — what is 0.6? Why 40? What's 5?
+// Before - what is 0.6? Why 40? What's 5?
 SparkMax motor = new SparkMax(5, MotorType.kBrushless);
 config.smartCurrentLimit(40);
 motor.set(0.6);
 ```
 
 ```java
-// After — Constants.java
+// After - Constants.java
 public static final class IntakeConstants {
     public static final int    CAN_ID        = 5;
     public static final int    CURRENT_LIMIT = 40;
@@ -626,7 +627,7 @@ private final SparkMax motor = MotorHelper.createSparkMax(
 - [ ] Dead code and commented-out code is **deleted** (git remembers it)
 - [ ] Every public method has a one-line comment saying why it exists
 - [ ] It still builds and still runs on the robot
-- [ ] **PR it** — cleanup PRs get reviewed like any other
+- [ ] **PR it** - cleanup PRs get reviewed like any other
 :::
 
 # Robot Go 3
@@ -635,9 +636,9 @@ Commands `[CMD]`
 ## The mental model
 
 ::: incremental
-- A **Subsystem** is a *thing* — the intake, the arm, the drivetrain.
+- A **Subsystem** is a *thing* - the intake, the arm, the drivetrain.
   It owns hardware.
-- A **Command** is a *request* — "run the intake", "raise the arm to 40°".
+- A **Command** is a *request* - "run the intake", "raise the arm to 40°".
 - The **Scheduler** decides who gets what, and stops two commands from
   fighting over the same motor.
 :::
@@ -739,7 +740,7 @@ used onTrue where they wanted whileTrue.
 
 ## 🟩 Commands in 2027
 
-Setup has already moved from `robotInit()` into the constructor — **our repo
+Setup has already moved from `robotInit()` into the constructor - **our repo
 is on the right side of this today.** 2027 deletes `robotInit()` entirely.
 
 :::: {.columns}
@@ -773,11 +774,11 @@ public class Robot extends TimedRobot {
 **Commands v3** is also coming: commands written as straight-line code that
 pauses and resumes, instead of split across `initialize`/`execute`/`isFinished`.
 
-*Concept only — the API is still alpha.*
+*Concept only - the API is still alpha.*
 
 ::: notes
 Commands v3 leans on Java 21+ virtual threads, which the roboRIO's JVM couldn't
-do — that's why it's arriving with SystemCore rather than earlier. Everything
+do - that's why it's arriving with SystemCore rather than earlier. Everything
 in this session still applies; v3 changes how you write the body, not what a
 command or a requirement means.
 :::
@@ -785,16 +786,186 @@ command or a requirement means.
 ## Hands-on: write a real command
 
 ::: incremental
-1. Write `IntakeCommand` — runs the intake until a sensor sees a game piece
-2. `addRequirements()` — and understand why
+1. Write `IntakeCommand` - runs the intake until a sensor sees a game piece
+2. `addRequirements()` - and understand why
 3. Give it a **timeout** so a broken sensor can't hold the subsystem forever
 4. Bind it to a button
 5. Add a default command to your subsystem
 6. **PR it**
 :::
 
+# Robot Go 4 
+PID
 
-## Building this deck
+## Open loop vs closed loop
+
+**Open loop** - "spin at 60% power."
+
+```java
+motor.set(0.6);
+```
+
+The motor doesn't know where it is. Battery sags, load changes, results change.
+
+. . .
+
+**Closed loop** - "*be* at 40 degrees."
+
+The motor measures, compares, and corrects. Every 20 milliseconds. Forever.
+
+## Error is the whole idea
+
+```
+error = where I want to be  −  where I actually am
+```
+
+::: incremental
+- Error is big? Push hard.
+- Error is small? Ease off.
+- Error is zero? Stop.
+:::
+
+. . .
+
+Everything else in PID is refinement of that one sentence.
+
+## P - Proportional
+
+```java
+double output = P_GAIN * error;
+```
+
+::: incremental
+- The further away you are, the harder you push. That's it.
+- **Too small**: never gets there - "steady-state error"
+- **Too big**: overshoots, comes back, overshoots - oscillation
+- **P alone almost never quite arrives.** Gravity, friction, and stiction win
+  near the setpoint, where the error is small.
+:::
+
+## I - Integral
+
+```java
+double output = P_GAIN * error + I_GAIN * accumulatedError;
+```
+
+::: incremental
+- Adds up error **over time** - "we've been a little short for a while now"
+- Kills the steady-state error P leaves behind
+- **Too big**: winds up, then overshoots badly and oscillates slowly
+- Most FRC mechanisms use **`I_GAIN = 0`**. Try feedforward first.
+:::
+
+## D - Derivative
+
+```java
+double output = P_GAIN * error + I_GAIN * accumulatedError + D_GAIN * errorRate;
+```
+
+::: incremental
+- Responds to how **fast** error is changing
+- Acts like a brake - damps the overshoot P causes
+- Lets you run a higher `P_GAIN` without oscillating
+- **Too big**: jittery and noisy, because it amplifies sensor noise
+:::
+
+## Feedforward 
+
+PID reacts to error. **Feedforward predicts what you need before there's error.**
+
+```java
+SimpleMotorFeedforward feedforward =
+    new SimpleMotorFeedforward(S_GAIN, V_GAIN, A_GAIN);
+PIDController pidController = new PIDController(P_GAIN, I_GAIN, D_GAIN);
+
+double volts = feedforward.calculate(targetVelocity)
+             + pidController.calculate(currentVelocity, targetVelocity);
+motor.setVoltage(volts);
+```
+
+::: incremental
+- **S_GAIN** - voltage just to overcome friction and start moving
+- **V_GAIN** - voltage per unit of velocity
+- **A_GAIN** - voltage per unit of acceleration
+- **Feedforward does the work. PID cleans up the difference.**
+:::
+
+## A tuning workflow that won't break the robot
+
+::: incremental
+1. **Everything to zero.** P_GAIN, I_GAIN, D_GAIN, all of it.
+2. Feedforward first - find `S_GAIN` (barely moves), then `V_GAIN`.
+3. Raise `P_GAIN` until it oscillates. Then **halve it**.
+4. Add `D_GAIN` to damp what's left.
+5. Only add `I_GAIN` if you still have persistent error. Usually you won't.
+6. **Graph it in AdvantageScope.** Setpoint and measurement on one plot.
+:::
+
+**Have a hand on the e-stop. Start with small setpoints.**
+
+## Units will get you
+
+```java
+// Encoder says 2048 ticks. Two thousand what?
+double position = encoder.getPosition();
+```
+
+::: incremental
+- Ticks → rotations → **gear ratio** → inches or degrees
+- Do the conversion **once**, in the subsystem, and never again
+- Everything outside the subsystem speaks real-world units
+- "It moved 40 times too far" is a gear ratio. Every single time.
+:::
+
+```java
+private static final double GEAR_RATIO                 = 9.0;
+private static final double WHEEL_CIRCUMFERENCE_INCHES = 4.0 * Math.PI;
+
+public double getPositionInches() {
+    return encoder.getPosition() / GEAR_RATIO * WHEEL_CIRCUMFERENCE_INCHES;
+}
+```
+
+## 🟩 PID in 2027
+
+`PIDCommand`, `ProfiledPIDCommand`, and `TrapezoidProfileCommand` are removed.
+
+Use the controller classes directly inside your own command - which is what
+this session already teaches.
+
+::: incremental
+- `PIDController` - stays
+- `SimpleMotorFeedforward`, `ArmFeedforward`, `ElevatorFeedforward` - stay
+- `ProfiledPIDController` - stays
+- Only the *command wrappers* go away
+:::
+
+## Hands-on: hold a setpoint
+
+::: incremental
+1. Pick a mechanism with an encoder
+2. Feedforward first - find `S_GAIN` and `V_GAIN`
+3. Add `P_GAIN`, tune until it oscillates, halve it
+4. Add `D_GAIN`
+5. Graph setpoint vs. measurement in AdvantageScope
+6. **PR it** - include the graph and your final gains
+:::
+
+# ↻ Workshop - Cleanup #2
+
+## This week's target: the PID code
+
+Same [cleanup checklist](#cleanup-workshop) - new target.
+
+::: incremental
+- Are your gains in `Constants.java`, or scattered in the subsystem?
+- Did you copy a PID block between two subsystems?
+- Are the unit conversions in **one** place?
+- Does `getPositionInches()` actually return inches?
+- Delete the tuning experiments you left commented out.
+:::
+
+# Building this deck
 
 ```bash
 ./gradlew slides           # build/slides/slides.html
