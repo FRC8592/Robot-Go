@@ -926,6 +926,42 @@ public double getPositionInches() {
 }
 ```
 
+## Units in WPILib
+The Java units library is available in the edu.wpi.first.units package. The most relevant classes are:
+
+The various classes for predefined dimensions, such as DistanceUnit and TimeUnit
+
+Units, which contains a set of predefined units. Take a look a the Units javadoc to browse the available units and their types.
+
+Measure, which is used to tag a value with a unit, and the dimension-specific implementations like Distance and Time
+
+## Example Usage of Units
+Other measures can also be created using their Unit.of method:
+```java
+Mass kArmMass = Kilograms.of(1.423);
+Distance kArmLength = Inches.of(32.25);
+Angle kMinArmAngle = Degrees.of(5);
+Angle kArmMaxTravel = Rotations.of(0.45);
+LinearVelocity kMaxSpeed = MetersPerSecond.of(2.5);
+```
+
+## Converting Units
+Unit conversions can be done by calling Measure.in(Unit). The Java type system will prevent units from being converted between incompatible types, such as distances to angles.
+
+```java
+LinearVelocity kMaxVelocity = FeetPerSecond.of(12.5);
+LinearAcceleration kMaxAcceleration = FeetPerSecond.per(Second).of(22.9);
+kMaxVelocity.in(MetersPerSecond); // => OK! Returns 3.81
+kMaxVelocity.in(RadiansPerSecond); // => Compile error! LinearVelocity cannot be converted to AngularVelocity
+
+// The WPILib math libraries use SI metric units, so we have to convert to meters:
+TrapezoidProfile.Constraints kDriveConstraints = new TrapezoidProfile.Constraints(
+  maxVelocity.in(MetersPerSecond),
+  maxAcceleration.in(MetersPerSecondPerSecond)
+);
+```
+
+
 ## 🟩 PID in 2027
 
 `PIDCommand`, `ProfiledPIDCommand`, and `TrapezoidProfileCommand` are removed.
