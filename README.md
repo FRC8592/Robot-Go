@@ -30,6 +30,21 @@ header-includes: |
   </style>
 ---
 
+# Building this deck
+
+```bash
+./gradlew slides           # build/slides/slides.html
+./gradlew portableSlides   # self-contained, works offline
+```
+
+If pandoc isn't on your PATH:
+
+```bash
+./gradlew -Ppandoc=/path/to/pandoc slides
+```
+
+Note: you will need to install pandoc before building
+
 # Welcome
 
 ## Robot Go
@@ -55,7 +70,6 @@ That's the job, and that's what the practice robot is for.
 | 4 | PID and How It Works                             |
 | ↻ | *Workshop: Cleanup #2*                           |
 | 5 | Architecture: Command vs State Machine vs Hybrid |
-| ↻ | *Workshop: Cleanup #3*                           |
 | - | **Buffer meeting** - catch up, ask anything      |
 
 ## Two symbols you'll see everywhere
@@ -1001,17 +1015,315 @@ Same [cleanup checklist](#cleanup-workshop) - new target.
 - Delete the tuning experiments you left commented out.
 :::
 
-# Building this deck
+# Robot Go 5
+Architecture
 
-```bash
-./gradlew slides           # build/slides/slides.html
-./gradlew portableSlides   # self-contained, works offline
+## Three ways to organize a robot
+
+You now know how to make a motor move, write a command, and close a loop.
+
+**How do you organize all of it so it doesn't become spaghetti?**
+
+::: incremental
+- `[CMD]` **Command-based** - what we've been doing
+- `[FSM]` **State machine** - explicit states and transitions
+- `[HYB]` **Hybrid** - what most good teams actually run
+:::
+
+## The problem
+
+An intake and an indexer that must cooperate:
+
+::: incremental
+- Don't run the intake if the indexer is full
+- Don't shoot until the shooter is at speed
+- Don't shoot if there's nothing to shoot
+- If the driver lets go mid-sequence, end up somewhere **safe**
+- And the operator can press any button at any time
+:::
+
+. . .
+
+**Try writing that with commands alone.** It works - right up until it doesn't.
+
+## `[CMD]` Pure command-based
+
+```java
+operator.a().whileTrue(
+    Commands.sequence(
+        intake.runCommand(),
+        indexer.seatCommand()));
+
+operator.b().whileTrue(
+    Commands.parallel(
+        shooter.spinUpCommand(),
+        Commands.waitUntil(shooter::atSpeed)
+                .andThen(indexer.feedCommand())));
 ```
 
-If pandoc isn't on your PATH:
+**Great at:** driver bindings, composition, one-off actions, autonomous routines.
 
-```bash
-./gradlew -Ppandoc=/path/to/pandoc slides
+::: notes
+Show this as genuinely good code, not a strawman. For a lot of mechanisms this
+is the right and final answer. The problems only appear at a specific kind of
+complexity, which the next slide names.
+:::
+
+## `[CMD]` Where it breaks down
+
+::: incremental
+- **"What is the robot doing right now?"** has no single answer - the truth is
+  spread across whatever commands happen to be scheduled
+- Interlocks get copy-pasted into every command that needs them
+- Interrupting mid-sequence can leave a mechanism somewhere weird
+- Two operators, two buttons, one surprising interaction
+- Debugging means reconstructing which commands were live at the time
+:::
+
+## `[FSM]` State machines
+
+**One variable holds the truth.**
+
+```java
+public enum State {
+    IDLE,
+    INTAKING,
+    INDEXING,
+    READY,
+    SHOOTING
+}
+
+private State state = State.IDLE;
 ```
 
-Press **`S`** in the deck for speaker notes, **`Esc`** for the slide overview.
+::: incremental
+- The robot is in **exactly one** state
+- Transitions are explicit and enumerable
+- Interlocks are just transitions that don't exist
+:::
+
+::: notes
+"Interlocks are transitions that don't exist" is the key insight. In the
+command world you write a guard clause; in the FSM world you simply don't draw
+the arrow. Illegal things become unrepresentable rather than merely checked.
+:::
+
+## `[FSM]` The transition table
+
+```java
+@Override
+public void periodic() {
+    State next = switch (state) {
+        case IDLE     -> wantIntake ? State.INTAKING : State.IDLE;
+        case INTAKING -> indexer.hasPiece() ? State.INDEXING : State.INTAKING;
+        case INDEXING -> indexer.isSeated() ? State.READY : State.INDEXING;
+        case READY    -> (wantShoot && shooter.atSpeed())
+                             ? State.SHOOTING : State.READY;
+        case SHOOTING -> !indexer.hasPiece() ? State.IDLE : State.SHOOTING;
+    };
+
+    if (next != state) {
+        state = next;
+        applyOutputs();
+    }
+    statePublisher.set(state.toString());   // one value tells you everything
+}
+```
+
+## `[FSM]` Strengths and costs
+
+:::: {.columns}
+::: {.column width="50%"}
+**Good at**
+
+- Deterministic behavior
+- Trivial interlocks
+- One-glance debugging
+- Safe by construction
+- Superstructures
+:::
+::: {.column width="50%"}
+  **Costs**
+
+- Driver bindings get clumsy
+- Doesn't compose
+- Autonomous is awkward
+- Every new behavior means new states
+:::
+::::
+
+. . .
+
+**Neither style is wrong. They're good at different things.**
+
+## `[HYB]` Use both
+
+**The state machine owns what's legal. Commands own what's requested.**
+
+```java
+public class Superstructure extends SubsystemBase {
+    private State state = State.IDLE;
+    private State goal  = State.IDLE;
+
+    /** Commands call this. The FSM decides if and when to honor it. */
+    public void requestGoal(State goal) {
+        this.goal = goal;
+    }
+
+    public Command goalCommand(State goal) {
+        return startEnd(() -> requestGoal(goal),
+                        () -> requestGoal(State.IDLE),
+                        this);
+    }
+}
+```
+
+## `[HYB]` The bindings get simple again
+
+```java
+operator.a().whileTrue(superstructure.goalCommand(State.INTAKING));
+operator.b().whileTrue(superstructure.goalCommand(State.SHOOTING));
+```
+
+::: incremental
+- Buttons express **intent**, not sequences
+- The FSM decides whether that intent is currently legal
+- Interlocks live in **one** place
+- Release a button and it falls back to a safe state automatically
+- Autonomous requests goals the same way teleop does
+:::
+
+## Same intake, three ways
+
+| | `[CMD]` | `[FSM]` | `[HYB]` |
+|---|---|---|---|
+| "What's it doing?" | Hard | **One value** | **One value** |
+| Driver bindings | **Easy** | Clumsy | **Easy** |
+| Interlocks | Copy-pasted | **Built in** | **Built in** |
+| Composition | **Great** | Poor | **Great** |
+| Autonomous | **Easy** | Awkward | **Easy** |
+| Learning curve | Low | Medium | Medium |
+
+
+## How to choose
+
+::: incremental
+- **One motor, one job, no interactions?** → `[CMD]`.
+  A simple intake or a climber. Don't over-engineer.
+- **Several mechanisms that must not fight?** → `[HYB]`.
+  Superstructures, anything with interlocks.
+- **Pure `[FSM]` everywhere?** Rare. The drivetrain in particular hates it.
+- **Start `[CMD]`. Promote to `[HYB]` when the guard clauses start repeating.**
+:::
+
+## Failure modes to watch for
+
+::: incremental
+- **`[CMD]`**: interlocks copy-pasted into six commands, five of them updated
+- **`[FSM]`**: state explosion - 30 states because someone encoded every combination
+- **`[HYB]`**: commands reaching past the FSM to poke motors directly
+- **All three**: no telemetry, so you can't tell what happened after the match
+:::
+
+
+## Hands-on: promote your intake
+
+::: incremental
+1. Start from your `[CMD]` intake from Session 3
+2. Add a `Superstructure` with an `enum State` and a transition `switch`
+3. Add one real interlock - don't intake when the indexer is full
+4. Convert your bindings to `requestGoal(...)`
+5. Publish the current state to NetworkTables
+6. **PR it** - explain in the PR why the interlock is safer this way
+:::
+
+# Appendix
+
+## Git & Gradle cheat sheet
+
+```bash
+# git
+git checkout -b yourname/thing     # new branch
+git status                         # what have I changed?
+git add -A && git commit -m "..."  # save
+git push -u origin yourname/thing  # share
+git checkout main && git pull      # get up to date
+git log --oneline -10              # recent history
+
+# gradle
+./gradlew build                    # compile
+./gradlew deploy                   # send to robot
+./gradlew simulateJava             # run without a robot
+./gradlew slides                   # build this deck
+```
+
+## 🟦 → 🟩 Migration reference
+
+| 2026 (roboRIO) | 2027 (SystemCore) |
+|---|---|
+| `edu.wpi.first.*` | `org.wpilib.*` |
+| `frc::` (C++) | `wpi::` (C++) |
+| `robotInit()` *(already deprecated)* | removed — `Robot()` constructor |
+| `motor.set(x)` | `motor.setThrottle(x)` |
+| `motor.stopMotor()` | `motor.disable()` |
+| `XboxController`, etc. | `Gamepad` |
+| SmartDashboard / Shuffleboard | Elastic + AdvantageScope |
+| NetworkTables 3 | NetworkTables 4 |
+| PathWeaver | Choreo / PathPlanner |
+| `RamseteController` | LTV Unicycle Controller |
+| `MathUtil.clamp()` | `Math.clamp()` |
+| Java 17 | Java 25 |
+
+**⚠️ 2027 is in alpha. Verify against the docs before relying on this.**
+
+## Glossary
+
+| Term | Meaning |
+|---|---|
+| **CAN** | The wire that carries messages to motor controllers |
+| **Subsystem** | A class that owns a piece of hardware |
+| **Command** | A request for a subsystem to do something |
+| **Scheduler** | Decides which commands run and resolves conflicts |
+| **Requirement** | A command's claim on a subsystem |
+| **Setpoint** | Where you want the mechanism to be |
+| **Error** | Setpoint minus actual position |
+| **Feedforward** | Predicted effort, applied before there's error |
+| **Brownout** | Battery voltage sagged; the RIO starts shedding load |
+| **FSM** | Finite state machine |
+
+## Links
+
+**WPILib**
+
+- [Documentation](https://docs.wpilib.org/)
+- [New for 2027](https://docs.wpilib.org/en/latest/docs/yearly-overview/yearly-changelog.html)
+- [Removed features](https://docs.wpilib.org/en/2027/docs/yearly-overview/removed-features.html)
+- [Command-based programming](https://docs.wpilib.org/en/stable/docs/software/commandbased/index.html)
+
+**Tools**
+
+- [AdvantageScope](https://docs.advantagescope.org/)
+- [Elastic](https://frc-elastic.gitbook.io/docs)
+- [Choreo](https://choreo.autos/)
+- [PathPlanner](https://pathplanner.dev/)
+
+**Community**
+
+- [Chief Delphi](https://www.chiefdelphi.com/)
+- [FRC Discord](https://discord.gg/frc)
+
+## Future topics
+
+Things we didn't get to — candidates for next preseason:
+
+::: incremental
+1. **Simulation & AdvantageScope** — code with zero hardware
+2. **Units & gear ratios** — the #1 source of "it moved 40× too far"
+3. **Motor safety & watchdogs** — loop overruns
+4. **Competition-season git** — pit hotfixes, tagging
+5. **Autonomous & paths** — Choreo, PathPlanner
+6. **SystemCore lab** — once 2027 hits beta
+7. **Electrical crossover** — CAN IDs, PDH, brownouts
+8. **Reading javadocs** — answering your own questions
+9. **Commands v3** — once the API settles
+:::
